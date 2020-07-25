@@ -116,14 +116,10 @@ editor.build = () => {
 	setScript = name => {
 		editor.current = null;
 		editor.script = name;
-		if (name) {
-			// For some reason TextField/Area use \r for line breaks
-			source.text = editor.scripts[name].replace("\n", "\r");
-			title.text = name;
-		} else {
-			source.text = "do it :)";
-			title.text = "Create a script!";
-		}
+
+		// For some reason TextField/Area use \r for line breaks
+		source.text = editor.scripts[name].replace("\n", "\r");
+		title.text = name;
 	};
 	setScript(editor.script);
 
@@ -160,11 +156,17 @@ editor.build = () => {
 		const name = "Script #" + (Object.keys(editor.scripts).length + 1);
 		editor.scripts[name] = editor.defaultScript;
 		rebuildScripts(name);
+		setScript(name);
 	})).growX();
 	side.row();
 
-	/* Delete a script */
+	/* Delete a script, just clear this one if its the last */
 	side.addImageTextButton("$toolbox.remove-script", Icon.trash, run(() => {
+		if (Object.keys(editor.scripts).length == 1) {
+			editor.scripts[editor.script] = "";
+			return setScript(editor.script);
+		}
+
 		delete editor.scripts[editor.script];
 		setScript(Object.keys(editor.scripts)[0]);
 		rebuildScripts();
