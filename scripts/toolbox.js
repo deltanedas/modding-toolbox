@@ -18,22 +18,16 @@
 (() => {
 
 const ui = require("ui-lib/library");
+const editor = require("modding-toolbox/editor");
+const settings = require("settings");
 
 const toolbox = {
 	tools: {
-		update: null,
-		draw: null
+		update: {},
+		draw: {}
 	},
 	dialog: null,
 	error: null
-};
-
-// Strings to save as toolbox.tool.<key>
-const saving = {};
-
-const saveSource = (name, source) => {
-	Core.settings.put("toolbox.tools." + name, source);
-	Core.settings.save();
 };
 
 const showError = msg => {
@@ -71,11 +65,39 @@ const buildError = () => {
 	return dialog;
 };
 
-const addTool = (t, name) => {
-	const dialog = toolbox.tools[name].dialog;
+const buildTool = (cont, name) => {
+	const dialog = editor.selectionDialog;
+	const tool = toolbox.tools[name];
+	const t = cont.table().get();
+
 	t.addImageTextButton("$toolbox." + name, Icon.pencil, 48, run(() => {
+try{
+		dialog.set(script => {
+			Core.settings.putSave("toolbox.tool." + name + ".script", script);
+		});
 		dialog.show();
+}catch(e){print(e)}
 	})).width(200).height(48);
+
+	t.addImageButton(Icon.ok, 48, run(() => {
+		if (!tool.script) {
+			return showError("Specify a script.");
+		}
+
+		if (!editor.scripts[tool.script]) {
+			return showError("Script '" + tool.script + "' does not exist.");
+		}
+
+		try {
+			eval("tool.func = (w, h) => {\n" + editor.scripts[tool.script] + "}");
+		} catch (e) {
+			showError("Failed to compile script '" + tool.script + "': " + e);
+		}
+	})).size(48);
+
+	t.addImageButton(Icon.cancel, 48, run(() => {
+		tool.func = null;
+	})).size(48);
 };
 
 const buildToolbox = () => {
@@ -83,50 +105,30 @@ const buildToolbox = () => {
 	const t = dialog.cont;
 	t.defaults().width(300).height(64);
 
-	addTool(t, "update");
+	editor.build();
+	editor.add(t);
 	t.row();
-	addTool(t, "draw");
+
+	settings.build();
+	settings.add(t);
+	t.row();
+
+	buildTool(t, "update");
+	t.row();
+	buildTool(t, "draw");
 
 	dialog.addCloseButton();
 	return dialog;
 };
 
-const buildFunc = name => {
-	const dialog = new FloatingDialog("$toolbox." + name);
-	const cont = dialog.cont;
-	const tool = {
-		dialog: dialog,
-		func: null,
-		source: Core.settings.get("toolbox.tools." + name, "<code>")
-	};
-
-	cont.addImage().width(375).color(Pal.stat).height(4);
-	cont.row();
-	cont.addArea(tool.source, cons(text => {
-		tool.source = text;
-	})).width(350).height(200);
-
-	dialog.addCloseButton();
-	dialog.buttons.addImageButton(Icon.ok, 48, run(() => {
-		try {
-			eval("tool.func = (w, h) => {\n" + tool.source + "}");
-			saveSource(name, tool.source);
-		} catch (e) {
-			showError("Failed to compile " + name + " function: " + e);
-		}
-	}));
-	dialog.buttons.addImageButton(Icon.cancel, 48, run(() => {
-		tool.func = null;
-	}));
-
-	return tool;
-};
-
 ui.onLoad(() => {
-	const tools = toolbox.tools;
-	tools.update = buildFunc("update");
-	tools.draw = buildFunc("draw");
+	editor.load();
+	for (var i in toolbox.tools) {
+		const script = Core.settings.get("toolbox.tool." + i + ".script", null);
+		toolbox.tools[i].script = script;
+	}
 
+	editor.build();
 	toolbox.error = buildError();
 	toolbox.dialog = buildToolbox();
 });
