@@ -71,12 +71,10 @@ const buildTool = (cont, name) => {
 	const t = cont.table().get();
 
 	t.addImageTextButton("$toolbox." + name, Icon.pencil, 48, run(() => {
-try{
 		dialog.set(script => {
 			Core.settings.putSave("toolbox.tool." + name + ".script", script);
 		});
 		dialog.show();
-}catch(e){print(e)}
 	})).width(200).height(48);
 
 	t.addImageButton(Icon.ok, 48, run(() => {
