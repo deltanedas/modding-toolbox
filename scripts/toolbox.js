@@ -69,16 +69,19 @@ const buildTool = (cont, name) => {
 	const dialog = editor.selectionDialog;
 	const tool = toolbox.tools[name];
 	const t = cont.table().get();
+	t.defaults().padRight(4);
 
 	t.addImageTextButton("$toolbox." + name, Icon.pencil, 48, run(() => {
 		dialog.set(script => {
+			print([name, tool, script])
+			tool.script = script;
 			Core.settings.putSave("toolbox.tool." + name + ".script", script);
 		});
 		dialog.show();
 	})).width(200).height(48);
 
 	t.addImageButton(Icon.ok, 48, run(() => {
-		if (!tool.script) {
+		if (tool.script == null) {
 			return showError("Specify a script.");
 		}
 

@@ -195,15 +195,20 @@ editor.build = () => {
 editor.buildSelection = () => {
 	const d = extendContent(FloatingDialog, "$toolbox.select-script", {
 		set(func) {
-			func = run(func);
-
 			d.cont.clear();
 			d.cont.pane(cons(t => {
 				for (var name in editor.scripts) {
-					t.addButton(name, func).growX().height(32);
-					t.row();
+					this.button(t, func, name);
 				}
 			})).growY().width(300);
+		},
+
+		button(t, func, name) {
+			t.addButton(name, run(() => {
+				func(name);
+				this.hide();
+			})).growX().height(48).padBottom(5);
+			t.row();
 		}
 	});
 
