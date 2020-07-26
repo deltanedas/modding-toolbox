@@ -73,7 +73,6 @@ const buildTool = (cont, name) => {
 
 	t.addImageTextButton("$toolbox." + name, Icon.pencil, 48, run(() => {
 		dialog.set(script => {
-			print([name, tool, script])
 			tool.script = script;
 			Core.settings.putSave("toolbox.tool." + name + ".script", script);
 		});
