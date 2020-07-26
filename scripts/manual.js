@@ -21,7 +21,11 @@ try {
 	rtfm.addPage("Modding Toolbox", [
 		"## Toolbox dialog",
 		"Click the [coral][] button in-game to open the toolbox.",
-		"In it there are a few tools:",
+		"In it there are some tools:",
+
+		"# Script Editor",
+		"Here you can edit scripts that can be used by other tools.",
+		"When the title (editable) has a red underline, there is unsaved work.",
 
 		"# Update",
 		"This function is run every tick, when not paused.",
@@ -30,6 +34,7 @@ try {
 		"# Draw",
 		"This is like [stat]Update[] but run on the client thread, and even when paused.",
 		"Draw.* functions take screen coordinates, not world units.",
+		"The fields [green]w[] and [green]h[] are set to the size of the screen."
 
 		"# Exceptions",
 		"If an exception is thrown, the function will be disabled and the error will be printed to the log."
