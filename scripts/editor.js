@@ -19,6 +19,10 @@
 
 (() => {
 
+if (this.global.toolbox.editor) {
+	return this.global.toolbox.editor;
+}
+
 const editor = {
 	defaultScript: "print(\"praise the cat god\");",
 	// Source of script that hasn't been saved yet
@@ -30,6 +34,7 @@ const editor = {
 	dialog: null,
 	selectionDialog: null
 };
+this.global.toolbox.editor = editor;
 
 editor.load = () => {
 	const s = Core.settings;
@@ -216,10 +221,15 @@ editor.buildSelection = () => {
 	editor.selectionDialog = d;
 };
 
+editor.select = func => {
+	editor.selectionDialog.set(func);
+	editor.selectionDialog.show();
+};
+
 editor.add = t => {
 	t.addButton("$toolbox.script-editor", run(() => {
 		editor.dialog.show();
-	})).padBottom(16);
+	}));
 };
 
 module.exports = editor;

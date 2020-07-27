@@ -17,10 +17,6 @@
 
 (() => {
 
-const ui = require("ui-lib/library");
-const editor = require("modding-toolbox/editor");
-const settings = require("settings");
-
 const toolbox = {
 	tools: {
 		update: {},
@@ -29,6 +25,12 @@ const toolbox = {
 	dialog: null,
 	error: null
 };
+this.global.toolbox = toolbox;
+
+const ui = require("ui-lib/library");
+const editor = require("modding-toolbox/editor");
+const settings = require("settings");
+const shaders = require("shaders");
 
 const showError = msg => {
 	Log.err(msg);
@@ -37,6 +39,7 @@ const showError = msg => {
 	err.message(msg);
 	err.show();
 };
+toolbox.showError = showError;
 
 /* Call the function and show any errors */
 const pcall = (name, w, h) => {
@@ -59,24 +62,22 @@ const buildError = () => {
 	const cont = dialog.cont;
 	cont.add("$error.title");
 	cont.row();
-	cont.add("Success");
+	cont.add("Success").grow().get().wrap = true;
 
 	dialog.addCloseButton();
 	return dialog;
 };
 
 const buildTool = (cont, name) => {
-	const dialog = editor.selectionDialog;
 	const tool = toolbox.tools[name];
 	const t = cont.table().get();
 	t.defaults().padRight(4);
 
 	t.addImageTextButton("$toolbox." + name, Icon.pencil, 48, run(() => {
-		dialog.set(script => {
+		editor.select(script => {
 			tool.script = script;
 			Core.settings.putSave("toolbox.tool." + name + ".script", script);
 		});
-		dialog.show();
 	})).width(200).height(48);
 
 	t.addImageButton(Icon.ok, 48, run(() => {
@@ -113,6 +114,10 @@ const buildToolbox = () => {
 	settings.add(t);
 	t.row();
 
+	shaders.build();
+	shaders.add(t);
+	t.row();
+
 	buildTool(t, "update");
 	t.row();
 	buildTool(t, "draw");
@@ -123,12 +128,12 @@ const buildToolbox = () => {
 
 ui.onLoad(() => {
 	editor.load();
+	shaders.load();
 	for (var i in toolbox.tools) {
 		const script = Core.settings.get("toolbox.tool." + i + ".script", null);
 		toolbox.tools[i].script = script;
 	}
 
-	editor.build();
 	toolbox.error = buildError();
 	toolbox.dialog = buildToolbox();
 });
@@ -137,6 +142,12 @@ ui.addButton("toolbox", "wrench", () => {
 	toolbox.dialog.show();
 });
 
+/*ui.addTable("menu", "toolbox", t => {
+	t.addImageTextButton("$toolbox", Icon.wrench, run(() => {
+		toolbox.dialog.show();
+	}));
+});
+*/
 
 /* Function tools */
 ui.addEffect((w, h) => {
