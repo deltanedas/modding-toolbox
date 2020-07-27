@@ -34,7 +34,7 @@ try {
 		"# Draw",
 		"This is like [stat]Update[] but run on the client thread, and even when paused.",
 		"Draw.* functions take screen coordinates, not world units.",
-		"The fields [green]w[] and [green]h[] are set to the size of the screen."
+		"The fields [green]w[] and [green]h[] are set to the size of the screen.",
 
 		"# Exceptions",
 		"If an exception is thrown, the function will be disabled and the error will be printed to the log."
