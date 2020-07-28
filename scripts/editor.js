@@ -27,8 +27,6 @@ if (this.global.toolbox.editor) {
 
 const editor = {
 	defaultScript: "print(\"praise the cat god\");",
-	// Source of script that hasn't been saved yet
-	current: null,
 	// Name of current script
 	script: null,
 	scripts: {},
@@ -60,12 +58,29 @@ editor.load = () => {
 	}
 };
 
+/* Copy the script to the clipboard in a rhino long string (array of lines)
+   Useful for shaders. */
+editor.copy = () => {
+	const lines = editor.scripts[editor.script].split("\n");
+	/* Sanitise each line */
+	for (var i in lines) {
+		var escaped = lines[i]
+			.replace(/\\/g, "\\\\")
+			.replace(/"/g, '\\"');
+		lines[i] = '"' + escaped + '"';
+	}
+
+	Core.app.clipboardText = "[\n\t" + lines.join(",\n\t") + "\n].join(\"\\n\")";
+	Vars.ui.showInfoToast("Copied to clipboard", 5);
+};
+
 editor.build = () => {
 	const d = new FloatingDialog("$toolbox.script-editor");
 	editor.dialog = d;
 	const t = d.cont;
 
-	var setScript, rebuildScripts, scripts;
+	var setScript, editScript, rebuildScripts;
+	var scripts;
 
 	/** Editor itself **/
 	const ed = t.table().grow().left().get();
@@ -73,7 +88,7 @@ editor.build = () => {
 	/* Script title */
 	const title = ed.addField("", cons(text => {
 		// Script list is split on commas
-		text = text.replace(",", "");
+		text = text.replace(/,/g, "");
 		title.text = text;
 
 		const src = editor.scripts[editor.script];
@@ -82,35 +97,36 @@ editor.build = () => {
 		editor.scripts[text] = src;
 		editor.script = text;
 
-		// save scrollX of sel.cells.get(0).get() here
+		// save scrollX of sel.cells.get(0).get() here?
 		rebuildScripts();
 	})).growX().get();
 	title.alignment = Align.center;
-	title.style = new TextField.TextFieldStyle(title.style);
 
 	ed.row();
 
 	/* Script source code */
 	const source = ed.addArea("", cons(text => {
-		editor.current = text;
-		title.style.background = Tex.underlineRed;
+		editScript(text);
 	})).grow().get();
 
 	ui.mobileAreaInput(source, text => {
-		editor.current = text;
-		title.style.background = Tex.underlineRed;
+		editScript(text)
 	}, () => {
 		return {
 			title: editor.script,
-			text: editor.current || editor.scripts[editor.script],
+			text: editor.scripts[editor.script],
 			// Max unsigned short - 1, if someone really needs it
 			maxLength: 65564
 
 		};
 	});
 
+	editScript = to => {
+		editor.scripts[editor.script] = to;
+		Core.settings.put("toolbox.scripts." + editor.script, to);
+	};
+
 	setScript = name => {
-		editor.current = null;
 		editor.script = name;
 
 		// For some reason TextField/Area use \r for line breaks
@@ -121,6 +137,7 @@ editor.build = () => {
 
 	/** Script selection **/
 	const side = t.table().growY().width(210).right().padLeft(50).get();
+	side.defaults().pad(5);
 
 	/* Script list */
 	side.pane(cons(t => {
@@ -129,7 +146,8 @@ editor.build = () => {
 		addScriptButton = name => {
 			scripts.addButton(name, run(() => {
 				setScript(name);
-			})).width(200).right();
+			})).growX().pad(4).right()
+				.get().getLabel().alignment = Align.left;
 			scripts.row();
 		};
 
@@ -145,43 +163,53 @@ editor.build = () => {
 		};
 		rebuildScripts();
 	})).growY().width(200).top().right().padBottom(12);
+
 	side.row();
+	side.table(cons(buttons => {
+		buttons.defaults().pad(5);
 
-	/* Add a new script */
-	side.addImageTextButton("$toolbox.add-script", Icon.pencil, run(() => {
-		const name = "Script #" + (Object.keys(editor.scripts).length + 1);
-		editor.scripts[name] = editor.defaultScript;
-		rebuildScripts(name);
-		setScript(name);
-	})).growX();
-	side.row();
+		/* Add a new script */
+		buttons.addImageButton(Icon.pencil, 24, run(() => {
+			const name = "Script #" + (Object.keys(editor.scripts).length + 1);
+			editor.scripts[name] = editor.defaultScript;
+			rebuildScripts(name);
+			setScript(name);
+		}));
 
-	/* Delete a script, just clear this one if its the last */
-	side.addImageTextButton("$toolbox.remove-script", Icon.trash, run(() => {
-		if (Object.keys(editor.scripts).length == 1) {
-			editor.scripts[editor.script] = "";
-			return setScript(editor.script);
-		}
+		/* Delete a script, just clear this one if its the last */
+		buttons.addImageButton(Icon.trash, 24, run(() => {
+			if (Object.keys(editor.scripts).length == 1) {
+				editor.scripts[editor.script] = "";
+				return setScript(editor.script);
+			}
 
-		delete editor.scripts[editor.script];
-		setScript(Object.keys(editor.scripts)[0]);
-		rebuildScripts();
-	})).growX();
+			delete editor.scripts[editor.script];
+			setScript(Object.keys(editor.scripts)[0]);
+			rebuildScripts();
+		}));
+	})).center();
 
-	/* Buttons */
+	/* Bottom buttons */
 	d.addCloseButton();
-
-	d.buttons.addImageTextButton("$save", Icon.save, run(() => {
-		if (!editor.current) return;
-
-		Core.settings.putSave("toolbox.scripts." + editor.script, editor.current);
-		title.style.background = Tex.underline;
-
-		editor.scripts[editor.script] = editor.current;
-		editor.current = null;
-
-		Vars.ui.showInfoToast("Saved script " + editor.script, 5);
+	d.buttons.addImageTextButton("$toolbox.run", Icon.play, run(() => {
+		try {
+			eval([
+				"(() => {",
+					"var w = Core.graphics.width;",
+					"var h = Core.graphics.height;",
+					editor.scripts[editor.script],
+				"})();"
+			].join("\n"));
+		} catch (e) {
+			ui.showError("Failed to run script '" + editor.script + "': " + e);
+		}
 	}));
+	/* Dump the script to a "multiline string" for mindustry. */
+	d.buttons.addImageTextButton("$toolbox.export", Icon.export, run(() => {
+		editor.copy();
+	}));
+
+	d.hidden(run(() => Core.settings.save()));
 
 	editor.buildSelection();
 
