@@ -19,6 +19,8 @@
 
 (() => {
 
+const ui = this.global.uiLib;
+
 if (this.global.toolbox.editor) {
 	return this.global.toolbox.editor;
 }
@@ -94,29 +96,18 @@ editor.build = () => {
 		title.style.background = Tex.underlineRed;
 	})).grow().get();
 
-	/* TextArea can't get newlines on Android, use the native text input. */
-	if (Vars.mobile) {
-		source.update(run(() => {
-			if (Core.scene.keyboardFocus == source) {
-				Core.scene.keyboardFocus = null;
+	ui.mobileAreaInput(source, text => {
+		editor.current = text;
+		title.style.background = Tex.underlineRed;
+	}, () => {
+		return {
+			title: editor.script,
+			text: editor.current || editor.scripts[editor.current],
+			// Max unsigned short - 1, if someone really needs it
+			maxLength: 65564
 
-				const input = new Input.TextInput;
-				input.multiline = true;
-				input.title = editor.script;
-				input.text = editor.current || editor.scripts[editor.script];
-				// Max unsigned short - 1, if someone really needs it
-				input.maxLength = 65564;
-
-				input.accepted = cons(text => {
-					editor.current = text;
-					title.style.background = Tex.underlineRed;
-					source.text = text.replace("\n", "\r");
-				});
-
-				Core.input.getTextInput(input);
-			}
-		}));
-	}
+		};
+	});
 
 	setScript = name => {
 		editor.current = null;
