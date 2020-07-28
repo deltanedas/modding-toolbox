@@ -129,6 +129,6 @@ ui.addEffect((w, h) => {
 	}
 
 	pcall("draw", w, h);
-});
+}, () => true);
 
 })();
