@@ -102,7 +102,7 @@ editor.build = () => {
 	}, () => {
 		return {
 			title: editor.script,
-			text: editor.current || editor.scripts[editor.current],
+			text: editor.current || editor.scripts[editor.script],
 			// Max unsigned short - 1, if someone really needs it
 			maxLength: 65564
 
@@ -114,7 +114,7 @@ editor.build = () => {
 		editor.script = name;
 
 		// For some reason TextField/Area use \r for line breaks
-		source.text = editor.scripts[name].replace("\n", "\r");
+		source.text = editor.scripts[name].replace(/\n/g, "\r");
 		title.text = name;
 	};
 	setScript(editor.script);
