@@ -22,8 +22,7 @@ const toolbox = {
 		update: {},
 		draw: {}
 	},
-	dialog: null,
-	error: null
+	dialog: null
 };
 this.global.toolbox = toolbox;
 
@@ -32,13 +31,7 @@ const editor = require("modding-toolbox/editor");
 const settings = require("settings");
 const shaders = require("shaders");
 
-const showError = msg => {
-	Log.err(msg);
-
-	const err = toolbox.error;
-	err.message(msg);
-	err.show();
-};
+const showError = ui.showError;
 toolbox.showError = showError;
 
 /* Call the function and show any errors */
@@ -50,22 +43,6 @@ const pcall = (name, w, h) => {
 		showError("Caught error for " + name + ": " + e);
 		tool.func = null;
 	}
-};
-
-const buildError = () => {
-	const dialog = extendContent(FloatingDialog, "$toolbox.error", {
-		message(msg) {
-			this.cont.cells.get(1).get().text = msg;
-		}
-	});
-
-	const cont = dialog.cont;
-	cont.add("$error.title");
-	cont.row();
-	cont.add("Success").grow().get().wrap = true;
-
-	dialog.addCloseButton();
-	return dialog;
 };
 
 const buildTool = (cont, name) => {
@@ -134,7 +111,6 @@ ui.onLoad(() => {
 		toolbox.tools[i].script = script;
 	}
 
-	toolbox.error = buildError();
 	toolbox.dialog = buildToolbox();
 });
 
@@ -142,12 +118,9 @@ ui.addButton("toolbox", "wrench", () => {
 	toolbox.dialog.show();
 });
 
-/*ui.addTable("menu", "toolbox", t => {
-	t.addImageTextButton("$toolbox", Icon.wrench, run(() => {
-		toolbox.dialog.show();
-	}));
+ui.addMenuButton("$toolbox", "wrench", () => {
+	toolbox.dialog.show();
 });
-*/
 
 /* Function tools */
 ui.addEffect((w, h) => {
