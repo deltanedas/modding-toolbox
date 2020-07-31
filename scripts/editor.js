@@ -47,8 +47,8 @@ editor.load = () => {
 	}
 
 	/* Load script names */
-	const names = Core.settings.get("toolbox.scripts", "").split(",");
-	editor.script = names[0];
+	const names = s.get("toolbox.scripts", "").split(",");
+	editor.script = names[names.length - 1];
 
 	/* Load each script */
 	for (var i in names) {
@@ -158,7 +158,7 @@ editor.build = () => {
 				addScriptButton(name);
 			}
 
-			Core.settings.putSave("toolbox.scripts",
+			Core.settings.put("toolbox.scripts",
 				Object.keys(editor.scripts).join(","));
 		};
 		rebuildScripts();

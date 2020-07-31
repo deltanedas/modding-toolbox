@@ -1,9 +1,9 @@
 {
 	"name": "modding-toolbox",
-	"displayName": "Modding [lightgrey]Toolbox",
+	"displayName": "Modding [light_grey]Toolbox",
 	"author": "DeltaNedas",
 	"description": "Adds some utilities for mod developers.\n[stat]Requires [#00aaff]DeltaNedas/ui-lib[].",
-	"version": "2.3.0",
+	"version": "2.3.1",
 	"dependencies": ["ui-lib"],
 	"hidden": true
 }
