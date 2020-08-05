@@ -17,18 +17,12 @@
 
 /* Settings viewer */
 
-(() => {
-
 const settings = {
 	dialog: null
 };
 
-const consumer = method => extend(Packages.java.util.function.Consumer, {
-	accept: method
-});
-
 settings.build = () => {
-	const d = extendContent(FloatingDialog, "$toolbox.settings-editor", {
+	const d = extendContent(BaseDialog, "$toolbox.settings-editor", {
 		load() {
 			this.cont.clear();
 
@@ -38,73 +32,71 @@ settings.build = () => {
 			var settings;
 
 			const addSetting = key => {
-				const cell = settings.table(cons(setting => {
-					setting.defaults().left().padLeft(5);
+				const cell = settings.table().growX().height(48).left().name(key);
+				const setting = cell.get();
+				setting.defaults().left().padLeft(5);
 
-					setting.add("Key: " + key);
-					setting.add("Value: " + Core.settings.get(key, null));
-					setting.addImageButton(Icon.trash, run(() => {
-						Core.settings.remove(key);
-						settings.cells.remove(cell, true);
-					}));
-				})).growX().height(48).left().name(key);
+				setting.add("Key: " + key);
+				setting.add("Value: " + Core.settings.get(key, null));
+				setting.button(Icon.trash, () => {
+					Core.settings.remove(key);
+					settings.cells.remove(cell, true);
+				});
 				settings.row();
 			};
 
-			this.cont.pane(cons(t => {
+			this.cont.pane(t => {
 				const keys = Core.settings.keys();
 				settings = t;
-				keys.forEach(consumer(key => {
+				keys.forEach(key => {
 					addSetting(key);
-				}));
-			})).grow().left().top();
+				});
+			}).grow().left().top();
 
 			this.cont.row();
 
 			/* Set a value */
-			this.cont.table(cons(set => {
+			this.cont.table(set => {
 				var key, value;
-				set.addField("key", cons(text => {
+				set.field("key", text => {
 					key = text;
-				})).left().width(200);
+				}).left().width(200);
 
-				set.addField("value", cons(text => {
+				set.field("value", text => {
 					value = text;
-				})).left().width(100);
+				}).left().width(100);
 
-				set.addImageButton(Icon.ok, run(() => {
+				set.button(Icon.ok, () => {
 					Core.settings.put(key, value);
 
 					/* Update the value in the table */
-					const found = settings.cells.find(boolf(cell => {
+					const found = settings.cells.find(cell => {
 						return cell.get().name == key
-					}));
+					});
 					if (found) {
 						found.get().cells.get(1).get().text = "Value: [green]" + value;
 					} else {
 						addSetting(key);
 					}
-				}));
-			})).bottom().growX();
+				});
+			}).bottom().growX();
 		}
 	});
 	settings.dialog = d;
 
 	d.addCloseButton();
-	d.addImageTextButton("$save", Icon.save, run(() => {
-		Core.settings.save();
+	d.button("$save", Icon.save, () => {
+		Core.settings.manualSave();
 		Vars.ui.showInfoToast("Saved!", 5);
-	})).left();
+	}).left();
 	return d;
 };
 
 settings.add = t => {
-	t.addImageTextButton("$toolbox.settings-editor", Icon.settings, run(() => {
+	t.button("$toolbox.settings-editor", Icon.settings, () => {
 		settings.dialog.load();
 		settings.dialog.show();
-	}));
+	});
 };
 
 module.exports = settings;
-
-})();

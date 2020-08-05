@@ -15,8 +15,6 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-(() => {
-
 const toolbox = {
 	tools: {
 		update: {},
@@ -50,14 +48,14 @@ const buildTool = (cont, name) => {
 	const t = cont.table().get();
 	t.defaults().padRight(4);
 
-	t.addImageTextButton("$toolbox." + name, Icon.pencil, 48, run(() => {
+	t.button("$toolbox." + name, Icon.pencil, 48, () => {
 		editor.select(script => {
 			tool.script = script;
 			Core.settings.putSave("toolbox.tool." + name + ".script", script);
 		});
-	})).width(200).height(48);
+	}).width(200).height(48);
 
-	t.addImageButton(Icon.ok, 48, run(() => {
+	t.button(Icon.ok, 48, () => {
 		if (tool.script == null) {
 			return showError("Specify a script.");
 		}
@@ -71,15 +69,15 @@ const buildTool = (cont, name) => {
 		} catch (e) {
 			showError("Failed to compile script '" + tool.script + "': " + e);
 		}
-	})).size(48);
+	}).size(48);
 
-	t.addImageButton(Icon.cancel, 48, run(() => {
+	t.button(Icon.cancel, 48, () => {
 		tool.func = null;
-	})).size(48);
+	}).size(48);
 };
 
 const buildToolbox = () => {
-	const dialog = new FloatingDialog("$toolbox");
+	const dialog = new BaseDialog("$toolbox");
 	const t = dialog.cont;
 	t.defaults().width(300).height(64);
 
@@ -130,5 +128,3 @@ ui.addEffect((w, h) => {
 
 	pcall("draw", w, h);
 }, () => true);
-
-})();

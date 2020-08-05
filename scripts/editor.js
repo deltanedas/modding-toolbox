@@ -22,7 +22,8 @@
 const ui = this.global.uiLib;
 
 if (this.global.toolbox.editor) {
-	return this.global.toolbox.editor;
+	module.exports = this.global.toolbox.editor;
+	return;
 }
 
 const editor = {
@@ -59,7 +60,7 @@ editor.load = () => {
 };
 
 /* Copy the script to the clipboard in a rhino long string (array of lines)
-   Useful for shaders. */
+   Useful for shaders in 5.0. */
 editor.copy = () => {
 	const lines = editor.scripts[editor.script].split("\n");
 	/* Sanitise each line */
@@ -75,18 +76,18 @@ editor.copy = () => {
 };
 
 editor.build = () => {
-	const d = new FloatingDialog("$toolbox.script-editor");
+	const d = new BaseDialog("$toolbox.script-editor");
 	editor.dialog = d;
 	const t = d.cont;
 
-	var setScript, editScript, rebuildScripts;
+	var setScript, editScript, rebuildScripts, addScriptButton;
 	var scripts;
 
 	/** Editor itself **/
 	const ed = t.table().grow().left().get();
 
 	/* Script title */
-	const title = ed.addField("", cons(text => {
+	const title = ed.field("", text => {
 		// Script list is split on commas
 		text = text.replace(/,/g, "");
 		title.text = text;
@@ -99,15 +100,15 @@ editor.build = () => {
 
 		// save scrollX of sel.cells.get(0).get() here?
 		rebuildScripts();
-	})).growX().get();
+	}).growX().get();
 	title.alignment = Align.center;
 
 	ed.row();
 
 	/* Script source code */
-	const source = ed.addArea("", cons(text => {
+	const source = ed.area("", text => {
 		editScript(text);
-	})).grow().get();
+	}).grow().get();
 
 	ui.mobileAreaInput(source, text => {
 		editScript(text)
@@ -117,7 +118,6 @@ editor.build = () => {
 			text: editor.scripts[editor.script],
 			// Max unsigned short - 1, if someone really needs it
 			maxLength: 65564
-
 		};
 	});
 
@@ -140,13 +140,13 @@ editor.build = () => {
 	side.defaults().pad(5);
 
 	/* Script list */
-	side.pane(cons(t => {
+	side.pane(t => {
 		scripts = t;
 
 		addScriptButton = name => {
-			scripts.addButton(name, run(() => {
+			scripts.button(name, () => {
 				setScript(name);
-			})).growX().pad(4).right()
+			}).growX().pad(4).right()
 				.get().getLabel().alignment = Align.left;
 			scripts.row();
 		};
@@ -162,36 +162,35 @@ editor.build = () => {
 				Object.keys(editor.scripts).join(","));
 		};
 		rebuildScripts();
-	})).growY().width(200).top().right().padBottom(12);
+	}).growY().width(200).top().right().padBottom(12);
 
 	side.row();
-	side.table(cons(buttons => {
-		buttons.defaults().pad(5);
+	const buttons = side.table().center().get();
+	buttons.defaults().pad(5);
 
-		/* Add a new script */
-		buttons.addImageButton(Icon.pencil, 24, run(() => {
-			const name = "Script #" + (Object.keys(editor.scripts).length + 1);
-			editor.scripts[name] = editor.defaultScript;
-			rebuildScripts(name);
-			setScript(name);
-		}));
+	/* Add a new script */
+	buttons.button(Icon.pencil, 24, () => {
+		const name = "Script #" + (Object.keys(editor.scripts).length + 1);
+		editor.scripts[name] = editor.defaultScript;
+		rebuildScripts(name);
+		setScript(name);
+	});
 
-		/* Delete a script, just clear this one if its the last */
-		buttons.addImageButton(Icon.trash, 24, run(() => {
-			if (Object.keys(editor.scripts).length == 1) {
-				editor.scripts[editor.script] = "";
-				return setScript(editor.script);
-			}
+	/* Delete a script, just clear this one if its the last */
+	buttons.button(Icon.trash, 24, () => {
+		if (Object.keys(editor.scripts).length == 1) {
+			editor.scripts[editor.script] = "";
+			return setScript(editor.script);
+		}
 
-			delete editor.scripts[editor.script];
-			setScript(Object.keys(editor.scripts)[0]);
-			rebuildScripts();
-		}));
-	})).center();
+		delete editor.scripts[editor.script];
+		setScript(Object.keys(editor.scripts)[0]);
+		rebuildScripts();
+	});
 
 	/* Bottom buttons */
 	d.addCloseButton();
-	d.buttons.addImageTextButton("$toolbox.run", Icon.play, run(() => {
+	d.buttons.button("$toolbox.run", Icon.play, () => {
 		try {
 			eval([
 				"(() => {",
@@ -203,35 +202,35 @@ editor.build = () => {
 		} catch (e) {
 			ui.showError("Failed to run script '" + editor.script + "': " + e);
 		}
-	}));
-	/* Dump the script to a "multiline string" for mindustry. */
-	d.buttons.addImageTextButton("$toolbox.export", Icon.export, run(() => {
-		editor.copy();
-	}));
+	});
 
-	d.hidden(run(() => Core.settings.save()));
+	/* Dump the script to a "multiline string" for mindustry. */
+	d.buttons.button("$toolbox.export", Icon.export, () => {
+		editor.copy();
+	});
+
+	d.hidden(() => Core.settings.manualSave());
 
 	editor.buildSelection();
-
 	return d;
 };
 
 editor.buildSelection = () => {
-	const d = extendContent(FloatingDialog, "$toolbox.select-script", {
+	const d = extendContent(BaseDialog, "$toolbox.select-script", {
 		set(func) {
 			d.cont.clear();
-			d.cont.pane(cons(t => {
+			d.cont.pane(t => {
 				for (var name in editor.scripts) {
 					this.button(t, func, name);
 				}
-			})).growY().width(300);
+			}).growY().width(300);
 		},
 
 		button(t, func, name) {
-			t.addButton(name, run(() => {
+			t.button(name, () => {
 				func(name);
 				this.hide();
-			})).growX().height(48).padBottom(5);
+			}).growX().height(48).padBottom(5);
 			t.row();
 		}
 	});
@@ -246,9 +245,9 @@ editor.select = func => {
 };
 
 editor.add = t => {
-	t.addButton("$toolbox.script-editor", run(() => {
+	t.button("$toolbox.script-editor", () => {
 		editor.dialog.show();
-	}));
+	});
 };
 
 module.exports = editor;

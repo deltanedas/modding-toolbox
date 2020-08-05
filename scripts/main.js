@@ -15,9 +15,5 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-(() => {
-
 require("modding-toolbox/toolbox");
 require("manual");
-
-})();

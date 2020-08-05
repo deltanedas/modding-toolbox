@@ -15,8 +15,6 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-(() => {
-
 const Shader = Packages.arc.graphics.gl.Shader;
 
 const editor = require("modding-toolbox/editor");
@@ -76,7 +74,7 @@ shaders.load = () => {
 };
 
 shaders.build = () => {
-	const d = new FloatingDialog("$toolbox.shaders");
+	const d = new BaseDialog("$toolbox.shaders");
 	const t = d.cont;
 	t.defaults().center().top();
 
@@ -88,7 +86,10 @@ shaders.build = () => {
 			}
 
 			this.super$draw();
-			Draw.shader();
+
+			if (shaders.shader) {
+				Draw.shader();
+			}
 		}
 	})).size(128).fillY();
 	t.row();
@@ -98,14 +99,14 @@ shaders.build = () => {
 
 	/* Shader configuration */
 	const addScript = key => {
-		scripts.addButton("$toolbox.shaders." + key, run(() => {
+		scripts.button("$toolbox.shaders." + key, () => {
 			editor.select(script => {
 				shaders[key] = script;
 				Core.settings.putSave("toolbox.shaders." + key, script);
 			})
-		})).padRight(8).width(160);
+		}).padRight(8).width(160);
 
-		scripts.label(prov(() => shaders[key] || "...")).left().width(200);
+		scripts.label(() => shaders[key] || "...").left().width(200);
 		scripts.row();
 	};
 
@@ -114,22 +115,20 @@ shaders.build = () => {
 	addScript("apply");
 
 	d.addCloseButton();
-	d.buttons.addImageTextButton("$run", Icon.ok, run(() => {
+	d.buttons.button("$run", Icon.ok, () => {
 		try {
 			shaders.compile();
 		} catch (e) {
 			toolbox.showError(e);
 		}
-	}));
+	});
 	shaders.dialog = d;
 };
 
 shaders.add = t => {
-	t.addButton("$toolbox.shaders", run(() => {
+	t.button("$toolbox.shaders", () => {
 		shaders.dialog.show();
-	})).padBottom(16);
+	}).padBottom(16);
 };
 
 module.exports = shaders;
-
-})();
