@@ -221,12 +221,12 @@ editor.buildSelection = () => {
 			d.cont.clear();
 			d.cont.pane(t => {
 				for (var name in editor.scripts) {
-					this.button(t, func, name);
+					this.addbutton(t, func, name);
 				}
 			}).growY().width(300);
 		},
 
-		button(t, func, name) {
+		addbutton(t, func, name) {
 			t.button(name, () => {
 				func(name);
 				this.hide();
