@@ -22,7 +22,8 @@
 const ui = this.global.uiLib;
 
 if (this.global.toolbox.editor) {
-	return this.global.toolbox.editor;
+	module.exports = this.global.toolbox.editor;
+	return;
 }
 
 const editor = {
