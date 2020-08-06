@@ -29,7 +29,7 @@ this.global.toolbox = toolbox;
 const ui = require("ui-lib/library");
 const editor = require("modding-toolbox/editor");
 const settings = require("settings");
-const shaders = require("shaders");
+const shaders = require("modding-toolbox/shaders");
 
 const showError = ui.showError;
 toolbox.showError = showError;

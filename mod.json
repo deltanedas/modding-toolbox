@@ -3,7 +3,7 @@
 	"displayName": "[accent]Modding [gray]Toolbox[][]",
 	"author": "DeltaNedas",
 	"description": "Adds some utilities for mod developers.\n[stat]Requires [#00aaff]DeltaNedas/ui-lib[].",
-	"version": "2.3.2",
+	"version": "2.3.3",
 	"dependencies": ["ui-lib"],
 	"hidden": true
 }
