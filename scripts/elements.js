@@ -145,6 +145,30 @@ const scl = (name, def) => {
 	};
 };
 
+const enum = (name, enum, def) => {
+	const setter = getSetter(name);
+	// [JavaClass package.(Class)]
+	const enumname = (enum + "").match(/([^.]+)\]$/)[1];
+
+	return {
+		apply(element, value) {
+			element.cell.get()[name] = enum[value];
+		},
+
+		build(element, value, t) {
+			// TODO dropdown
+			t.add();
+		},
+
+		export(value) {
+			return setter + "(" + enumname + "." + value + ")";
+		},
+
+		def: def,
+		needsElement: true
+	};
+};
+
 /* Element Types */
 
 const base = {
@@ -164,13 +188,6 @@ const base = {
 };
 
 const from = (base, obj) => {
-	if (Array.isArray(obj)) {
-		const def = base.defaults;
-		for (let i in def) {
-			obj.push(def[i]);
-		}
-		return obj;
-	}
 	return Object.assign(Object.create(base.properties), obj);
 };
 
@@ -203,6 +220,7 @@ elements.Label = {
 		fontScaleX: scl("fontScaleX", 1),
 		fontScaleY: scl("fontScaleY", 1),
 		fontScale: scl("fontScale", 1),
+		alignment: enum("alignment", Align, "left"),
 		wrap: bool("wrap", false)
 	})
 };
