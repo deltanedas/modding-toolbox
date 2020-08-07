@@ -17,8 +17,11 @@
 
 /* Property types */
 
+const getSetter = name => "set" + (name.substr(0, 1).toUpperCase() + name.substr(1));
+
+// Modifier of the element
 const prop = (name, def) => {
-	const setter = "get().set" + (name.substr(0, 1).toUpperCase() + name.substr(1));
+	const setter = getSetter(name);
 	return {
 		apply(element, value) {
 			element.cell.get()[name] = value;
@@ -35,35 +38,110 @@ const prop = (name, def) => {
 			return setter + "(\"" + value.replace(/\\|"/g, "\\\0") + "\")";
 		},
 
+		def: def,
+		needsElement: true
+	};
+};
+
+// Modifier of the cell
+const func = (name, def) => {
+	return {
+		apply(element, value) {
+			element.cell[name](value);
+		},
+
+		build(element, value, t) {
+			t.field(element.properties[name], text => {
+				const num = parseFloat(text);
+				if (!text || isNan(num)) return;
+
+				element.properties[name] = num;
+				this.apply(element, num);
+			});
+		},
+
+		export(value) {
+			return name + "(" + value + ")";
+		},
+
 		def: def
 	};
 };
 
-const numbers = (count, func) => {
-	const nums = [];
+const numbers = (name, count, func, def) => {
+	const defs = [];
 	for (var i = 0; i < count; i++) {
-		nums[i] = 0;
+		defs[i] = def === undefined ? 0 : def;
 	}
 
 	return {
 		apply: func,
 
-		build(element, t) {
+		build(element, nums, t) {
 			for (let i in nums) {
 				t.field(nums[i], text => {
 					const num = parseFloat(text);
-					if (!isNan(num)) {
+					if (!text || !isNan(num)) {
 						nums[i] = num;
 					}
 				}).width(30).padRight(8);
 			}
 		},
 
-		export(value) {
-			return "";
+		export(values) {
+			return name + "(" + values.join(", ") + ")";
 		},
 
-		def: nums
+		def: defs
+	};
+};
+
+const bool = (name, def) => {
+	const setter = getSetter(name);
+	return {
+		apply(element, value) {
+			element.cell.get()[name] = value;
+		},
+
+		build(element, value, t) {
+			const button = t.button(value + "", Styles.clearTogglet, () => {
+				value = !value;
+				element.properties[name] = value;
+				this.apply(element, value);
+				button.getLabel().text = value;
+			}).growX().get();
+		},
+
+		export(value) {
+			return setter + "(" + value + ")";
+		},
+
+		def: def,
+		needsElement: true
+	};
+};
+
+// Like prop but nonzero
+const scl = (name, def) => {
+	const setter = getSetter(name);
+	return {
+		apply(element, value) {
+			element.cell.get()[name] = value;
+		},
+
+		build(element, value, t) {
+			t.slider(0.25, 3, 0.25, value, num => {
+				element.properties[name] = num;
+				this.apply(element, num);
+			});
+		},
+
+		export(value) {
+			return setter + "(" + value + ")";
+		},
+
+		def: def,
+		needsElement: true
 	};
 };
 
@@ -72,31 +150,44 @@ const numbers = (count, func) => {
 const base = {
 	new: () => new Element(),
 	properties: {
-/*		"margin": numbers(4, (elem, m) => {
-			elem.cell.margin(m[0], m[1], m[2], m[3]);
-		}) */
+		width: func("width", 50),
+		height: func("height", 50),
+		size: numbers("size", 2, (elem, s) => {
+			elem.cell.size(s[0], s[1]);
+		}),
+
+		marginLeft: func("marginLeft", 4),
+		marginRight: func("marginRight", 4),
+		marginTop: func("marginTop", 4),
+		marginBottom: func("marginBottom", 4)
 	}
 };
 
 const from = (base, obj) => {
+	if (Array.isArray(obj)) {
+		const def = base.defaults;
+		for (let i in def) {
+			obj.push(def[i]);
+		}
+		return obj;
+	}
 	return Object.assign(Object.create(base.properties), obj);
 };
 
 const elements = {};
 
 elements.Row = {
-	properties: {},
 	add(element, t) {
 		t.row();
 	},
-	export: () => "t.row();"
+
+	export: () => "table.row();",
+
+	properties: {}
 };
 
 elements.Label = {
 	new: () => new Label("Label"),
-	properties: from(base, {
-		text: prop("text", "Label")
-	}),
 
 	export(element) {
 		const out = "table.add(\"" + escape(element.properties.text) + "\")";
@@ -105,7 +196,15 @@ elements.Label = {
 			out += "\n\t." + this.properties[i].escape(element.properties[i]);
 		}
 		return out + ";";
-	}
+	},
+
+	properties: from(base, {
+		text: prop("text", "Label"),
+		fontScaleX: scl("fontScaleX", 1),
+		fontScaleY: scl("fontScaleY", 1),
+		fontScale: scl("fontScale", 1),
+		wrap: bool("wrap", false)
+	})
 };
 
 module.exports = elements;

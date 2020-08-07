@@ -32,13 +32,6 @@ uieditor.selectElement = callback => {
 	uieditor.elementDialog.select(callback);
 };
 
-uieditor.selectProperty = element => {
-	uieditor.propDialog.rebuild(element, name => {
-		element.properties[name] = element.type.properties[name].def;
-		uieditor.editElement(element);
-	});
-};
-
 uieditor.buildSelections = () => {
 	uieditor.elementDialog = extendContent(BaseDialog, "$toolbox.uieditor.elements", {
 		select(callback) {
@@ -47,15 +40,17 @@ uieditor.buildSelections = () => {
 			t.pane(elems => {
 				for (let i in elements) {
 					const name = i;
-					t.button(name, () => {
+					elems.button(name, () => {
 						callback(name);
-					});
-					t.row();
+						this.hide();
+					}).growX().pad(8);
+					elems.row();
 				}
 			}).width(300).height(400).center();
 			this.show();
 		}
 	});
+	uieditor.elementDialog.addCloseButton();
 };
 
 /* Menu impl */
@@ -76,16 +71,17 @@ uieditor.build = () => {
 				properties: {}
 			};
 
-			for (var i in type.properties) {
+			for (let i in type.properties) {
 				element.properties[i] = type.properties[i].def;
 			}
 
-			Object.assign(element.properties, props || {});
+			Object.assign(element.properties, props);
 
 			if (type.add) type.add(element, preview);
 
-			uieditor.workspace.push(element);
 			this.apply(element);
+			uieditor.workspace.push(element);
+			uieditor.selected = element;
 			uieditor.rebuild();
 			return element;
 		},
@@ -109,40 +105,44 @@ uieditor.build = () => {
 
 		uieditor.rebuild = () => {
 			elems.clear();
+			elems.defaults().top();
 			for (var i in uieditor.workspace) {
 				const element = uieditor.workspace[i];
 				elems.button(element.name, Styles.squaret, () => {
 					uieditor.editElement(element);
-				}).width(200 - 42).left();
-
-				const index = i;
-				elems.button(Icon.trash, squarei, () => {
-					uieditor.workspace.splice(index, 1);
-					uieditor.rebuild();
-				}).size(32).left();
+				}).growX().pad(8);
 				elems.row();
 			}
 
-			/* Separator */
+			const buttons = new Table();
+			buttons.defaults().size(48).center();
 			if (i !== undefined) {
-				elems.image().size(200, 4).color(Pal.accent).pad(16);
+				// Separator
+				elems.image().height(4).growX().color(Pal.accent).pad(16);
 				elems.row();
+
+				// Delete selected element
+				buttons.button(Icon.trash, squarei, () => {
+					const elem = uieditor.selected;
+					uieditor.workspace.splice(uieditor.workspace.indexOf(elem), 1);
+					elem.cell.get().remove();
+					uieditor.rebuild();
+				});
 			}
 
-			elems.button(Icon.add, squarei, () => {
+			buttons.button(Icon.add, squarei, () => {
 				uieditor.selectElement(name => {
-					dialog.addElement(name);
+					dialog.addElement(name, {});
 				});
-			}).size(48).padTop(16);
+			});
+
+			elems.add(buttons).center();
 		};
-	}).growY().width(250);
+	}).grow();;
 
-	const preview = t.table().grow().center().get();
+	const preview = t.table().grow().center().left().get();
 	dialog.preview = preview;
-
-	dialog.addElement("Label", {
-		text: "Anuken"
-	});
+	uieditor.rebuild();
 
 	const propw = t.table().growY().width(300).center().right().get();
 	propw.add("$toolbox.uieditor.properties");
@@ -161,29 +161,8 @@ uieditor.build = () => {
 
 				prop.add(name).width(70).padRight(10);
 				element.type.properties[name].build(element, element.properties[name], prop);
-
-				props.button(Icon.trash, squarei, () => {
-					delete element.properties[name];
-					uieditor.editElement(element);
-				}).right();
 				props.row();
 			}
-
-			/* Don't add the button if there are no more properties */
-			if (Object.keys(element.properties).length ==
-				Object.keys(element.type.properties).length) {
-				return false;
-			}
-
-			/* Separator */
-			if (i !== undefined) {
-				props.image().height(4).growX().pad(16).color(Pal.accent);
-				props.row();
-			}
-
-			props.button(Icon.add, squarei, () => {
-				uieditor.selectProperty(element);
-			});
 
 			return true;
 		};
