@@ -56,33 +56,31 @@ settings.build = () => {
 			this.cont.row();
 
 			/* Set a value */
-			this.cont.table(set => {
-				var key, value;
-				set.field("key", text => {
-					key = text;
-				}).left().width(200);
+			const set = this.cont.table().bottom().growX().get();
+			var key, value;
+			set.field("key", text => {
+				key = text;
+			}).left().width(200);
 
-				set.field("value", text => {
-					value = text;
-				}).left().width(100);
+			set.field("value", text => {
+				value = text;
+			}).left().width(100);
 
-				set.button(Icon.ok, () => {
-					Core.settings.put(key, value);
+			set.button(Icon.ok, () => {
+				Core.settings.put(key, value);
 
-					/* Update the value in the table */
-					const found = settings.cells.find(cell => {
-						return cell.get().name == key
-					});
-					if (found) {
-						found.get().cells.get(1).get().text = "Value: [green]" + value;
-					} else {
-						addSetting(key);
-					}
+				/* Update the value in the table */
+				const found = settings.cells.find(cell => {
+					return cell.get().name == key
 				});
-			}).bottom().growX();
+				if (found) {
+					found.get().cells.get(1).get().text = "Value: [green]" + value;
+				} else {
+					addSetting(key);
+				}
+			});
 		}
 	});
-	settings.dialog = d;
 
 	d.addCloseButton();
 	d.button("$save", Icon.save, () => {
@@ -98,5 +96,7 @@ settings.add = t => {
 		settings.dialog.show();
 	});
 };
+
+settings.load = () => {};
 
 module.exports = settings;

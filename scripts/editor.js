@@ -37,6 +37,28 @@ const editor = {
 };
 this.global.toolbox.editor = editor;
 
+var source, title;
+
+editor.setScript = name => {
+	editor.script = name;
+
+	// For some reason TextField/Area use \r for line breaks
+	source.text = editor.scripts[name].replace(/\n/g, "\r");
+	title.text = name;
+};
+
+editor.addScript = source => {
+	const name = "Script #" + (Object.keys(editor.scripts).length + 1);
+	editor.scripts[name] = source;
+	editor.rebuildScripts(name);
+	editor.setScript(name);
+};
+
+editor.editScript = to => {
+	editor.scripts[editor.script] = to;
+	Core.settings.put("toolbox.scripts." + editor.script, to);
+};
+
 editor.load = () => {
 	const s = Core.settings;
 
@@ -77,17 +99,16 @@ editor.copy = () => {
 
 editor.build = () => {
 	const d = new BaseDialog("$toolbox.script-editor");
-	editor.dialog = d;
 	const t = d.cont;
 
-	var setScript, editScript, rebuildScripts, addScriptButton;
+	var addScriptButton;
 	var scripts;
 
 	/** Editor itself **/
 	const ed = t.table().grow().left().get();
 
-	/* Script title */
-	const title = ed.field("", text => {
+	/* Script's title */
+	title = ed.field("", text => {
 		// Script list is split on commas
 		text = text.replace(/,/g, "");
 		title.text = text;
@@ -99,19 +120,19 @@ editor.build = () => {
 		editor.script = text;
 
 		// save scrollX of sel.cells.get(0).get() here?
-		rebuildScripts();
+		editor.rebuildScripts();
 	}).growX().get();
 	title.alignment = Align.center;
 
 	ed.row();
 
 	/* Script source code */
-	const source = ed.area("", text => {
-		editScript(text);
+	source = ed.area("", text => {
+		editor.editScript(text);
 	}).grow().get();
 
 	ui.mobileAreaInput(source, text => {
-		editScript(text)
+		editor.editScript(text)
 	}, () => {
 		return {
 			title: editor.script,
@@ -121,19 +142,7 @@ editor.build = () => {
 		};
 	});
 
-	editScript = to => {
-		editor.scripts[editor.script] = to;
-		Core.settings.put("toolbox.scripts." + editor.script, to);
-	};
-
-	setScript = name => {
-		editor.script = name;
-
-		// For some reason TextField/Area use \r for line breaks
-		source.text = editor.scripts[name].replace(/\n/g, "\r");
-		title.text = name;
-	};
-	setScript(editor.script);
+	editor.setScript(editor.script);
 
 	/** Script selection **/
 	const side = t.table().growY().width(210).right().padLeft(50).get();
@@ -145,13 +154,13 @@ editor.build = () => {
 
 		addScriptButton = name => {
 			scripts.button(name, () => {
-				setScript(name);
+				editor.setScript(name);
 			}).growX().pad(4).right()
 				.get().getLabel().alignment = Align.left;
 			scripts.row();
 		};
 
-		rebuildScripts = () => {
+		editor.rebuildScripts = () => {
 			scripts.clear();
 
 			for (var name in editor.scripts) {
@@ -161,7 +170,7 @@ editor.build = () => {
 			Core.settings.put("toolbox.scripts",
 				Object.keys(editor.scripts).join(","));
 		};
-		rebuildScripts();
+		editor.rebuildScripts();
 	}).growY().width(200).top().right().padBottom(12);
 
 	side.row();
@@ -170,22 +179,19 @@ editor.build = () => {
 
 	/* Add a new script */
 	buttons.button(Icon.pencil, 24, () => {
-		const name = "Script #" + (Object.keys(editor.scripts).length + 1);
-		editor.scripts[name] = editor.defaultScript;
-		rebuildScripts(name);
-		setScript(name);
+		editor.addScript(editor.defaultScript);
 	});
 
 	/* Delete a script, just clear this one if its the last */
 	buttons.button(Icon.trash, 24, () => {
 		if (Object.keys(editor.scripts).length == 1) {
 			editor.scripts[editor.script] = "";
-			return setScript(editor.script);
+			return editor.setScript(editor.script);
 		}
 
 		delete editor.scripts[editor.script];
-		setScript(Object.keys(editor.scripts)[0]);
-		rebuildScripts();
+		editor.setScript(Object.keys(editor.scripts)[0]);
+		editor.rebuildScripts();
 	});
 
 	/* Bottom buttons */
@@ -194,8 +200,6 @@ editor.build = () => {
 		try {
 			eval([
 				"(() => {",
-					"var w = Core.graphics.width;",
-					"var h = Core.graphics.height;",
 					editor.scripts[editor.script],
 				"})();"
 			].join("\n"));

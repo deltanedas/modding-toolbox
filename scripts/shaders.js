@@ -63,16 +63,6 @@ shaders.compile = () => {
 	}
 };
 
-shaders.load = () => {
-	const load = key => {
-		shaders[key] = Core.settings.get("toolbox.shaders." + key, null);
-	};
-
-	load("vert");
-	load("frag");
-	load("apply");
-};
-
 shaders.build = () => {
 	const d = new BaseDialog("$toolbox.shaders");
 	const t = d.cont;
@@ -122,13 +112,23 @@ shaders.build = () => {
 			toolbox.showError(e);
 		}
 	});
-	shaders.dialog = d;
+	return d;
 };
 
 shaders.add = t => {
 	t.button("$toolbox.shaders", () => {
 		shaders.dialog.show();
-	}).padBottom(16);
+	});
+};
+
+shaders.load = () => {
+	const load = key => {
+		shaders[key] = Core.settings.get("toolbox.shaders." + key, null);
+	};
+
+	load("vert");
+	load("frag");
+	load("apply");
 };
 
 module.exports = shaders;

@@ -25,9 +25,14 @@ const toolbox = {
 this.global.toolbox = toolbox;
 
 const ui = require("ui-lib/library");
-const editor = require("modding-toolbox/editor");
-const settings = require("settings");
-const shaders = require("shaders");
+const menus = [
+	require("modding-toolbox/editor"),
+	require("settings"),
+	require("shaders"),
+	require("uieditor")
+];
+
+const editor = menus[0];
 
 const showError = ui.showError;
 toolbox.showError = showError;
@@ -78,20 +83,19 @@ const buildTool = (cont, name) => {
 
 const buildToolbox = () => {
 	const dialog = new BaseDialog("$toolbox");
-	const t = dialog.cont;
+	var t;
+	dialog.cont.pane(table => {
+		t = table;
+	}).width(400).height(350);
 	t.defaults().width(300).height(64);
 
-	editor.build();
-	editor.add(t);
-	t.row();
+	for (var i in menus) {
+		menus[i].dialog = menus[i].build();
+		menus[i].add(t);
+		t.row();
+	}
 
-	settings.build();
-	settings.add(t);
-	t.row();
-
-	shaders.build();
-	shaders.add(t);
-	t.row();
+	t.cells.peek().padBottom(16);
 
 	buildTool(t, "update");
 	t.row();
@@ -102,8 +106,10 @@ const buildToolbox = () => {
 };
 
 ui.onLoad(() => {
-	editor.load();
-	shaders.load();
+	for (var i in menus) {
+		menus[i].load();
+	}
+
 	for (var i in toolbox.tools) {
 		const script = Core.settings.get("toolbox.tool." + i + ".script", null);
 		toolbox.tools[i].script = script;
