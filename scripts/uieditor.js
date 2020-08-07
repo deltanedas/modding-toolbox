@@ -22,6 +22,8 @@ if (this.global.toolbox.uieditor) {
 	return;
 }
 
+const ui = this.global.uiLib;
+
 const uieditor = {
 	workspace: [],
 	elements: require("elements")
@@ -37,33 +39,12 @@ uieditor.export = () => {
 		elems[i] = elem.export(elem);
 	}
 
-	editor.addScript(elems.join("\n\n"));
+	editor.addScript(elems.join("\n"));
 	editor.show();
 };
 
 uieditor.selectElement = callback => {
-	uieditor.elementDialog.select(callback);
-};
-
-uieditor.buildSelections = () => {
-	uieditor.elementDialog = extendContent(BaseDialog, "$toolbox.uieditor.elements", {
-		select(callback) {
-			const t = this.cont;
-			t.clear();
-			t.pane(elems => {
-				for (let i in elements) {
-					const name = i;
-					elems.button(name, () => {
-						callback(name);
-						this.hide();
-					}).growX().pad(8);
-					elems.row();
-				}
-			}).width(300).height(400).center();
-			this.show();
-		}
-	});
-	uieditor.elementDialog.addCloseButton();
+	ui.select("$toolbox.uieditor.elements", Object.keys(elements), callback);
 };
 
 /* Menu impl */
@@ -75,7 +56,7 @@ uieditor.build = () => {
 	squarei.over = squarei.checkedOver = Tex.buttonSquareOver;
 
 	const dialog = extendContent(BaseDialog, "$toolbox.uieditor", {
-		addElement(name, props) {
+		addElement(name) {
 			const type = elements[name];
 			const element = {
 				name: name,
@@ -87,8 +68,6 @@ uieditor.build = () => {
 			for (var i in type.properties) {
 				element.properties[i] = type.properties[i].def;
 			}
-
-			Object.assign(element.properties, props);
 
 			if (type.add) type.add(element, preview);
 
@@ -139,48 +118,47 @@ uieditor.build = () => {
 					const elem = uieditor.selected;
 					uieditor.workspace.splice(uieditor.workspace.indexOf(elem), 1);
 					if (elem.cell) elem.cell.get().remove();
+					uieditor.editElement(null);
 					uieditor.rebuild();
 				});
 			}
 
 			buttons.button(Icon.add, squarei, () => {
 				uieditor.selectElement(name => {
-					dialog.addElement(name, {});
+					dialog.addElement(name);
 				});
 			});
 
 			elems.add(buttons).center();
 		};
-	}).grow();;
+	}).grow();
 
 	const preview = t.table().grow().center().left().get();
 	dialog.preview = preview;
 	uieditor.rebuild();
 
-	const propw = t.table().growY().width(300).center().right().get();
+	const propw = t.table().growY().width(350).center().right().get();
 	propw.add("$toolbox.uieditor.properties");
 	propw.row();
 	propw.pane(props => {
 		props.background(Tex.buttonSquare);
-		props.defaults().pad(8);
+		props.defaults().pad(4);
 
 		uieditor.editElement = element => {
 			props.clear();
+			if (!element) return;
 
 			for (var i in element.properties) {
-				const prop = props.table().growX().get();
-				const name = i;
+				let prop = props.table().growX().left().get();
 				prop.background(Tex.buttonSquare);
 
-				print("Add " + name)
-				prop.add(name).width(70).padRight(6);
-				element.type.properties[name].build(element, element.properties[name], prop);
+				prop.add(i).width(70).padRight(6).left();
+				prop.defaults().fillX();
+				element.type.properties[i].build(element, element.properties[i], prop);
 				props.row();
 			}
 		};
 	}).grow();
-
-	uieditor.buildSelections();
 
 	dialog.addCloseButton();
 /*	dialog.buttons.button(Icon.export, "$export", () => {

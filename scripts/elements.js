@@ -15,6 +15,11 @@
 	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+/* Wrappers over arc Elements and their properties.
+   Exporting to JS is supported. */
+
+const ui = this.global.uiLib;
+
 /* Property types */
 
 const getSetter = name => "set" + (name.substr(0, 1).toUpperCase() + name.substr(1));
@@ -29,9 +34,11 @@ const prop = (name, def) => {
 
 		build(element, value, t) {
 			t.field(value, text => {
+				if (!text) return;
+
 				element.properties[name] = text;
 				this.apply(element, text);
-			}).growX();
+			}).growX().right();
 		},
 
 		export(value) {
@@ -53,11 +60,11 @@ const func = (name, def) => {
 		build(element, value, t) {
 			t.field(element.properties[name], text => {
 				const num = parseFloat(text);
-				if (!text || isNan(num)) return;
+				if (!text || isNaN(num)) return;
 
 				element.properties[name] = num;
 				this.apply(element, num);
-			});
+			}).right();
 		},
 
 		export(value) {
@@ -81,7 +88,7 @@ const numbers = (name, count, func, def) => {
 			for (let i in nums) {
 				t.field(nums[i], text => {
 					const num = parseFloat(text);
-					if (!text || !isNan(num)) {
+					if (!text || !isNaN(num)) {
 						nums[i] = num;
 					}
 				}).width(30).padRight(8);
@@ -104,12 +111,12 @@ const bool = (name, def) => {
 		},
 
 		build(element, value, t) {
-			const button = t.button(value + "", Styles.clearTogglet, () => {
+			const label = t.button(value + "", Styles.clearTogglet, () => {
 				value = !value;
 				element.properties[name] = value;
 				this.apply(element, value);
-				button.getLabel().text = value;
-			}).growX().get();
+				label.text = value + "";
+			}).width(60).get().getLabel();
 		},
 
 		export(value) {
@@ -133,7 +140,7 @@ const scl = (name, def) => {
 			t.slider(0.25, 3, 0.25, value, num => {
 				element.properties[name] = num;
 				this.apply(element, num);
-			});
+			}).width(100).right();
 		},
 
 		export(value) {
@@ -145,19 +152,33 @@ const scl = (name, def) => {
 	};
 };
 
-const enum = (name, enum, def) => {
+// "enum" is reserved
+const enumm = (name, enumm, def) => {
 	const setter = getSetter(name);
 	// [JavaClass package.(Class)]
-	const enumname = (enum + "").match(/([^.]+)\]$/)[1];
+	const enumname = (enumm + "").match(/([^.]+)\]$/)[1];
+
+	const values = [];
+	for (var i in enumm) {
+		if (typeof(enumm[i]) != "function") {
+			values.push(i);
+		}
+	}
 
 	return {
 		apply(element, value) {
-			element.cell.get()[name] = enum[value];
+			element.cell.get()[name] = enumm[value];
 		},
 
 		build(element, value, t) {
-			// TODO dropdown
-			t.add();
+			const label = t.button(value, Styles.clearPartialt, () => {
+				ui.select(name + " enum", values, selected => {
+print([selected, typeof(enumm[selected])]);
+					element.properties[name] = selected;
+					this.apply(element, selected);
+					label.text = selected;
+				});
+			}).width(80).get().getLabel();
 		},
 
 		export(value) {
@@ -176,9 +197,6 @@ const base = {
 	properties: {
 		width: func("width", 50),
 		height: func("height", 50),
-		size: numbers("size", 2, (elem, s) => {
-			elem.cell.size(s[0], s[1]);
-		}),
 
 		marginLeft: func("marginLeft", 4),
 		marginRight: func("marginRight", 4),
@@ -209,8 +227,9 @@ elements.Label = {
 	export(element) {
 		const out = "table.add(\"" + escape(element.properties.text) + "\")";
 		for (var i in element.properties) {
-			if (i == "text") continue;
-			out += "\n\t." + this.properties[i].escape(element.properties[i]);
+			const val = element.properties[i];
+			if (i == "text" || this.properties[i].def == val) continue;
+			out += "\n\t." + this.properties[i].export(element.properties[i]);
 		}
 		return out + ";";
 	},
@@ -219,8 +238,7 @@ elements.Label = {
 		text: prop("text", "Label"),
 		fontScaleX: scl("fontScaleX", 1),
 		fontScaleY: scl("fontScaleY", 1),
-		fontScale: scl("fontScale", 1),
-		alignment: enum("alignment", Align, "left"),
+		alignment: enumm("alignment", Align, "left"),
 		wrap: bool("wrap", false)
 	})
 };
