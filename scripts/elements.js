@@ -20,11 +20,27 @@
 
 const ui = this.global.uiLib;
 
+/* Exporting */
+
+const blacklist = (init, list) => {
+	return element => {
+		const out = [init(element)];
+		for (var i in element.properties) {
+			const val = element.properties[i];
+			if (list.indexOf(i) >= 0) continue;
+			out.push("\n\t." + this.properties[i].export(element.properties[i]));
+		}
+		return out.join(""); + ";";
+	};
+};
+
 /* Property types */
 
+// ".name =" can't be chained.
 const getSetter = name => "set" + (name.substr(0, 1).toUpperCase() + name.substr(1));
+const escapestr = str => str.replace(/\\|"/g, "\\\0");
 
-// Modifier of the element
+/* Element number property */
 const prop = (name, def) => {
 	const setter = getSetter(name);
 	return {
@@ -42,7 +58,7 @@ const prop = (name, def) => {
 		},
 
 		export(value) {
-			return setter + "(\"" + value.replace(/\\|"/g, "\\\0") + "\")";
+			return setter + "(\"" + escapestr(value) + "\")";
 		},
 
 		def: def,
@@ -50,8 +66,8 @@ const prop = (name, def) => {
 	};
 };
 
-// Modifier of the cell
-const func = (name, def) => {
+/* Cell number function */
+const num = (name, def) => {
 	return {
 		apply(element, value) {
 			element.cell[name](value);
@@ -128,7 +144,7 @@ const bool = (name, def) => {
 	};
 };
 
-// Like prop but nonzero
+/* Like prop but nonzero */
 const scl = (name, def) => {
 	const setter = getSetter(name);
 	return {
@@ -152,28 +168,27 @@ const scl = (name, def) => {
 	};
 };
 
-// "enum" is reserved
-const enumm = (name, enumm, def) => {
+/* Java enum for an Element, set by value */
+const enumj = (name, enumj, def) => {
 	const setter = getSetter(name);
 	// [JavaClass package.(Class)]
-	const enumname = (enumm + "").match(/([^.]+)\]$/)[1];
+	const enumname = (enumj + "").match(/([^.]+)\]$/)[1];
 
 	const values = [];
-	for (var i in enumm) {
-		if (typeof(enumm[i]) != "function") {
+	for (var i in enumj) {
+		if (enumj[i] != null && typeof(enumj[i]) != "function") {
 			values.push(i);
 		}
 	}
 
 	return {
 		apply(element, value) {
-			element.cell.get()[name] = enumm[value];
+			element.cell.get()[name] = enumj[value];
 		},
 
 		build(element, value, t) {
 			const label = t.button(value, Styles.clearPartialt, () => {
 				ui.select(name + " enum", values, selected => {
-print([selected, typeof(enumm[selected])]);
 					element.properties[name] = selected;
 					this.apply(element, selected);
 					label.text = selected;
@@ -190,19 +205,38 @@ print([selected, typeof(enumm[selected])]);
 	};
 };
 
+/* enumj but with a setter function and for Cells */
+const enumf = (name, enumf, def) => {
+	const ret = enumj(name, enumf, def);
+	ret.apply = (element, value) => {
+		element.cell[name](enumf[value]);
+	};
+	return ret;
+};
+
 /* Element Types */
 
 const base = {
 	new: () => new Element(),
 	properties: {
-		width: func("width", 50),
-		height: func("height", 50),
+		width: num("width", 50),
+		height: num("height", 50),
 
-		marginLeft: func("marginLeft", 4),
-		marginRight: func("marginRight", 4),
-		marginTop: func("marginTop", 4),
-		marginBottom: func("marginBottom", 4)
-	}
+		marginLeft: num("marginLeft", 4),
+		marginRight: num("marginRight", 4),
+		marginTop: num("marginTop", 4),
+		marginBottom: num("marginBottom", 4),
+
+		padLeft: num("padLeft", 4),
+		padRight: num("padRight", 4),
+		padTop: num("padTop", 4),
+		padBottom: num("padBottom", 4),
+
+		/* Cell alignment */
+		align: enumf("align", Align, "center")
+	},
+
+	defaults: []
 };
 
 const from = (base, obj) => {
@@ -218,29 +252,24 @@ elements.Row = {
 
 	export: () => "table.row();",
 
-	properties: {}
+	properties: {},
+	defaults: []
 };
 
 elements.Label = {
 	new: () => new Label("Label"),
 
-	export(element) {
-		const out = "table.add(\"" + escape(element.properties.text) + "\")";
-		for (var i in element.properties) {
-			const val = element.properties[i];
-			if (i == "text" || this.properties[i].def == val) continue;
-			out += "\n\t." + this.properties[i].export(element.properties[i]);
-		}
-		return out + ";";
-	},
+	export: blacklist(["text"], elem => "table.add(\"" + escapestr(elem.properties.text) + "\")"),
 
 	properties: from(base, {
 		text: prop("text", "Label"),
 		fontScaleX: scl("fontScaleX", 1),
 		fontScaleY: scl("fontScaleY", 1),
-		alignment: enumm("alignment", Align, "left"),
+		alignment: enumj("alignment", Align, "left"),
 		wrap: bool("wrap", false)
-	})
+	}),
+
+	defaults: ["text"]
 };
 
 module.exports = elements;

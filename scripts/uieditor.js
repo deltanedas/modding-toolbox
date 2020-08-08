@@ -47,6 +47,29 @@ uieditor.selectElement = callback => {
 	ui.select("$toolbox.uieditor.elements", Object.keys(elements), callback);
 };
 
+uieditor.selectProperty = elem => {
+	const avail = [];
+	for (var name in elem.type.properties) {
+		if (elem.properties[name] === undefined) {
+			avail.push(name);
+		}
+	}
+
+	ui.select("Property for " + elem.name, avail, selected => {
+		elem.properties[selected] = elem.type.properties[selected].def;
+		uieditor.editElement(elem);
+	});
+};
+
+uieditor.removeProp = (elem, name) => {
+	return () => {
+		const type = elem.type.properties[name];
+		type.apply(elem, type.def);
+		delete elem.properties[name];
+		uieditor.editElement(elem);
+	};
+};
+
 /* Menu impl */
 
 uieditor.build = () => {
@@ -65,8 +88,9 @@ uieditor.build = () => {
 				properties: {}
 			};
 
-			for (var i in type.properties) {
-				element.properties[i] = type.properties[i].def;
+			for (var i in type.defaults) {
+				var pname = type.defaults[i];
+				element.properties[pname] = type.properties[pname].def;
 			}
 
 			if (type.add) type.add(element, preview);
@@ -142,6 +166,7 @@ uieditor.build = () => {
 	propw.row();
 	propw.pane(props => {
 		props.background(Tex.buttonSquare);
+		props.top();
 		props.defaults().pad(4);
 
 		uieditor.editElement = element => {
@@ -152,11 +177,28 @@ uieditor.build = () => {
 				let prop = props.table().growX().left().get();
 				prop.background(Tex.buttonSquare);
 
-				prop.add(i).width(70).padRight(6).left();
+				prop.add(i).width(70).padRight(6).left().get().alignment = Align.left;
 				prop.defaults().fillX();
 				element.type.properties[i].build(element, element.properties[i], prop);
+				prop.button(Icon.trash, squarei, uieditor.removeProp(element, i))
+					.size(32).padLeft(8);
 				props.row();
 			}
+
+			// Don't show add button if there are no other properties
+			if (i == Object.keys(element.type.properties).length) {
+				return;
+			}
+
+			/* Separator */
+			if (i !== undefined) {
+				props.image().growX().height(4).pad(6).color(Pal.accent);
+				props.row();
+			}
+
+			props.button(Icon.add, squarei, () => {
+				uieditor.selectProperty(element);
+			}).size(48).pad(8).center();
 		};
 	}).grow();
 
