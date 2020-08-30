@@ -51,7 +51,7 @@ shaders.compile = () => {
 				try {
 					shaders.applyFunc.call(this, Core.graphics.width, Core.graphics.height);
 				} catch (e) {
-					toolbox.showError("Failed to apply shader: " + e);
+					toolbox.showError("Failed to apply shader", e);
 					delete shaders.shader;
 				}
 			}
@@ -107,7 +107,7 @@ shaders.build = () => {
 		try {
 			shaders.compile();
 		} catch (e) {
-			toolbox.showError(e);
+			toolbox.showError("Failed to compile shader", e);
 		}
 	});
 	return d;

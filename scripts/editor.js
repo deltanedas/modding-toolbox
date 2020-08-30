@@ -204,7 +204,7 @@ editor.build = () => {
 				"})();"
 			].join("\n"));
 		} catch (e) {
-			ui.showError("Failed to run script '" + editor.script + "': " + e);
+			ui.showError("Failed to run script '" + editor.script + "'", e);
 		}
 	});
 

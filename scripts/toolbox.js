@@ -43,7 +43,7 @@ const pcall = (name, w, h) => {
 	try {
 		if (tool.func) tool.func(w, h);
 	} catch (e) {
-		showError("Caught error for " + name + ": " + e);
+		showError("Caught error for " + name, e);
 		tool.func = null;
 	}
 };
@@ -72,7 +72,7 @@ const buildTool = (cont, name) => {
 		try {
 			eval("tool.func = (w, h) => {\n" + editor.scripts[tool.script] + "}");
 		} catch (e) {
-			showError("Failed to compile script '" + tool.script + "': " + e);
+			showError("Failed to compile script '" + tool.script + "'", e);
 		}
 	}).size(48);
 
