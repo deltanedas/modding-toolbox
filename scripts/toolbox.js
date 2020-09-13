@@ -56,7 +56,8 @@ const buildTool = (cont, name) => {
 	t.button("$toolbox." + name, Icon.pencil, 48, () => {
 		editor.select(script => {
 			tool.script = script;
-			Core.settings.putSave("toolbox.tool." + name + ".script", script);
+			Core.settings.put("toolbox.tool." + name + ".script", script);
+			Core.settings.manualSave();
 		});
 	}).width(200).height(48);
 

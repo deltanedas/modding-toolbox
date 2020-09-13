@@ -90,7 +90,8 @@ shaders.build = () => {
 		scripts.button("$toolbox.shaders." + key, () => {
 			editor.select(script => {
 				shaders[key] = script;
-				Core.settings.putSave("toolbox.shaders." + key, script);
+				Core.settings.put("toolbox.shaders." + key, script);
+				Core.settings.manualSave();
 			})
 		}).padRight(8).width(160);
 
