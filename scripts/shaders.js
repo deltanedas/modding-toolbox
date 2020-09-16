@@ -67,7 +67,8 @@ shaders.build = () => {
 	t.defaults().center().top();
 
 	/* Shader preview */
-	t.add(extendContent(Image, Core.atlas.find("router"), {
+	const preview = new TextureRegionDrawable(Core.atlas.find("router"));
+	t.add(extendContent(Image, preview, {
 		draw() {
 			if (shaders.shader) {
 				Draw.shader(shaders.shader);
@@ -103,8 +104,16 @@ shaders.build = () => {
 	addScript("frag");
 	addScript("apply");
 
+	/* Replace preview texture */
+	const p = t.table().width(300).get();
+	t.row();
+
+	p.field("router", name => {
+		preview.region = Core.atlas.find(name);
+	}).left().growX();
+
 	d.addCloseButton();
-	d.buttons.button("$run", Icon.ok, () => {
+	d.buttons.button("$toolbox.run", Icon.ok, () => {
 		try {
 			shaders.compile();
 		} catch (e) {

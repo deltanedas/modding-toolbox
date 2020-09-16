@@ -94,7 +94,8 @@ settings.add = t => {
 	t.button("$toolbox.settings-editor", Icon.settings, () => {
 		settings.dialog.load();
 		settings.dialog.show();
-	});
+	// FIXME: crashes when clicked
+	}).disabled(() => true);
 };
 
 settings.load = () => {};
