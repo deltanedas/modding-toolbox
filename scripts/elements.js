@@ -18,7 +18,7 @@
 /* Wrappers over arc Elements and their properties.
 	 Exporting to JS is supported. */
 
-const ui = this.global.uiLib;
+const ui = this.global.ui;
 
 /* Exporting */
 

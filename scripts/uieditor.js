@@ -15,14 +15,7 @@
 	along with this program.	If not, see <https://www.gnu.org/licenses/>.
 */
 
-(() => {
-
-if (this.global.toolbox.uieditor) {
-	module.exports = this.global.toolbox.uieditor;
-	return;
-}
-
-const ui = this.global.uiLib;
+const ui = this.global.ui;
 
 const uieditor = {
 	workspace: [],
@@ -221,5 +214,3 @@ uieditor.load = () => {
 
 module.exports = uieditor;
 this.global.uieditor = uieditor;
-
-})();

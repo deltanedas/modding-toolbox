@@ -18,7 +18,8 @@
 const toolbox = {
 	tools: {
 		update: {},
-		draw: {}
+		draw: {},
+		draw3d: {}
 	},
 	dialog: null
 };
@@ -41,17 +42,18 @@ toolbox.showError = showError;
 const pcall = (name, w, h) => {
 	const tool = toolbox.tools[name];
 	try {
-		if (tool.func) tool.func(w, h);
+		if (tool.func) eval(tool.func);
 	} catch (e) {
 		showError("Caught error for " + name, e);
 		tool.func = null;
 	}
 };
 
-const buildTool = (cont, name) => {
+const buildTool = (cont, name, extra) => {
 	const tool = toolbox.tools[name];
 	const t = cont.table().get();
 	t.defaults().padRight(4);
+	extra = extra.join("\n");
 
 	t.button("$toolbox." + name, Icon.pencil, 48, () => {
 		editor.select(script => {
@@ -70,11 +72,7 @@ const buildTool = (cont, name) => {
 			return showError("Script '" + tool.script + "' does not exist.");
 		}
 
-		try {
-			eval("tool.func = (w, h) => {\n" + editor.scripts[tool.script] + "}");
-		} catch (e) {
-			showError("Failed to compile script '" + tool.script + "'", e);
-		}
+		tool.func = extra + "\n" + editor.scripts[tool.script];
 	}).size(48);
 
 	t.button(Icon.cancel, 48, () => {
@@ -98,9 +96,14 @@ const buildToolbox = () => {
 
 	t.cells.peek().padBottom(16);
 
-	buildTool(t, "update");
+	buildTool(t, "update", []);
 	t.row();
-	buildTool(t, "draw");
+	buildTool(t, "draw", []);
+	t.row();
+	buildTool(t, "draw3d", [
+		"const r = Vars.renderer.planets;",
+		"const projection = r.cam.combined;"
+	]);
 
 	dialog.addCloseButton();
 	return dialog;
@@ -135,3 +138,7 @@ ui.addEffect((w, h) => {
 
 	pcall("draw", w, h);
 }, () => true);
+
+Events.run(Trigger.universeDrawEnd, () => {
+	pcall("draw3d", Core.graphics.width, Core.graphics.height);
+});

@@ -19,7 +19,7 @@
 
 (() => {
 
-const ui = this.global.uiLib;
+const ui = this.global.ui;
 
 if (this.global.toolbox.editor) {
 	module.exports = this.global.toolbox.editor;
@@ -198,11 +198,7 @@ editor.build = () => {
 	d.addCloseButton();
 	d.buttons.button("$toolbox.run", Icon.play, () => {
 		try {
-			eval([
-				"(() => {",
-					editor.scripts[editor.script],
-				"})();"
-			].join("\n"));
+			eval(editor.scripts[editor.script]);
 		} catch (e) {
 			ui.showError("Failed to run script '" + editor.script + "'", e);
 		}
