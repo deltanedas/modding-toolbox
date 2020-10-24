@@ -29,7 +29,7 @@ uieditor.export = () => {
 	const elems = [];
 	for (var i in uieditor.workspace) {
 		const elem = uieditor.workspace[i];
-		elems[i] = elem.export(elem);
+		elems[i] = elem.type.export(elem);
 	}
 
 	editor.addScript(elems.join("\n"));
