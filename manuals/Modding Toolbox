@@ -9,7 +9,7 @@ You can export it to an array of lines for use in 5.0 shaders.
 
 # Update
 This function is run every tick, when not paused.
-To always run it, use [stat]Draw[]
+To always run it, use [stat]Draw[].
 
 # Draw
 This is like [stat]Update[] but run on the client thread, and even when paused.
