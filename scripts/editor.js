@@ -42,8 +42,7 @@ var source, title;
 editor.setScript = name => {
 	editor.script = name;
 
-	// For some reason TextField/Area use \r for line breaks
-	source.text = editor.scripts[name].replace(/\n/g, "\r");
+	source.text = editor.scripts[name];
 	title.text = name;
 };
 
