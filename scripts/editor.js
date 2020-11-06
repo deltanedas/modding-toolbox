@@ -17,14 +17,7 @@
 
 /* Script editor */
 
-(() => {
-
 const ui = this.global.ui;
-
-if (this.global.toolbox.editor) {
-	module.exports = this.global.toolbox.editor;
-	return;
-}
 
 const editor = {
 	defaultScript: "print(\"praise the cat god\");",
@@ -250,5 +243,3 @@ editor.add = t => {
 };
 
 module.exports = editor;
-
-})();

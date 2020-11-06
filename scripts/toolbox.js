@@ -30,7 +30,8 @@ const menus = [
 	require("modding-toolbox/editor"),
 	require("settings"),
 	require("shaders"),
-	require("uieditor")
+	require("uieditor"),
+	require("outliner")
 ];
 
 const editor = menus[0];
