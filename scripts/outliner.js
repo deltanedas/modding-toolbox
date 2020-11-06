@@ -79,6 +79,7 @@ outliner.build = () => {
 			const png = new PixmapIO.PNG(outlined.width * outlined.height * 1.5);
 
 			const buffer = new java.io.ByteArrayOutputStream();
+			png.flipY = false;
 			png.write(buffer, outlined);
 			Core.app.clipboardText = new java.lang.String(Base64Coder.encode(buffer.toByteArray()));
 			png.dispose();
