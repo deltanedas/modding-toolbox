@@ -8,11 +8,11 @@
 
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.	If not, see <https://www.gnu.org/licenses/>.
+	along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 /* Outliner - adds an outline to an image on the clipboard */
@@ -25,6 +25,7 @@ const outliner = {
 	color: Pal.darkerMetal,
 	width: 3,
 
+	raw: null,
 	dialog: null
 };
 this.global.toolbox.outliner = outliner;
@@ -65,28 +66,37 @@ outliner.build = () => {
 	}).get().validator = text => !isNaN(parseInt(text));
 	t.add(top).row();
 
-	t.add("[stat]1.[] Copy [green]base64 -w 0 < image.png[] to your clipboard.").row();
+	t.add("[stat]1.[] Select an image to outline").row();
+	t.button("Select", () => {
+		readBinFile("Image to be outlined", "png", bytes => {
+			outliner.raw = bytes;
+		});
+	}).size(240, 50).center().row();
+
 	t.add("[stat]2.[] Adjust the settings. (Defaults are for a unit)").row();
 	t.add("[stat]3.[] Click [coral]Export[].").row();
-	t.add("[stat]4.[] Use [green]echo <paste> | base64 -d[] to get the outlined image.");
+	t.add("[stat]4.[] Select the output image file.");
 
 	d.addCloseButton();
 	d.buttons.button("Export", () => {
 		try {
-			const raw = Base64Coder.decode(Core.app.clipboardText);;
-			const pixmap = new Pixmap(raw);
+			const pixmap = new Pixmap(outliner.raw);
 			const outlined = Pixmaps.outline(pixmap, outliner.color, outliner.width);
 			const png = new PixmapIO.PNG(outlined.width * outlined.height * 1.5);
 
 			const buffer = new java.io.ByteArrayOutputStream();
 			png.flipY = false;
 			png.write(buffer, outlined);
-			Core.app.clipboardText = new java.lang.String(Base64Coder.encode(buffer.toByteArray()));
+
+			const bytes = buffer.toByteArray();
 			png.dispose();
+
+			writeBinFile("Outlined image", "png", bytes);
+			outliner.raw = null;
 		} catch (e) {
 			ui.showError("Failed to outline image", e);
 		}
-	});
+	}).disabled(() => !outliner.raw);
 
 	return d;
 };
