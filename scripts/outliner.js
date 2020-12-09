@@ -19,7 +19,7 @@
 
 importPackage(Packages.arc.util.serialization);
 
-const ui = this.global.ui;
+const ui = global.ui;
 
 const outliner = {
 	color: Pal.darkerMetal,
@@ -28,7 +28,7 @@ const outliner = {
 	raw: null,
 	dialog: null
 };
-this.global.toolbox.outliner = outliner;
+global.toolbox.outliner = outliner;
 
 outliner.load = () => {};
 

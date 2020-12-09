@@ -22,7 +22,7 @@ const settings = {
 };
 
 settings.build = () => {
-	const d = extendContent(BaseDialog, "$toolbox.settings-editor", {
+	const d = extend(BaseDialog, "$toolbox.settings-editor", {
 		load() {
 			this.cont.clear();
 

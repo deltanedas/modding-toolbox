@@ -17,7 +17,7 @@
 
 /* Script editor */
 
-const ui = this.global.ui;
+const ui = global.ui;
 
 const editor = {
 	defaultScript: "print(\"praise the cat god\");",
@@ -28,7 +28,7 @@ const editor = {
 	dialog: null,
 	selectionDialog: null
 };
-this.global.toolbox.editor = editor;
+global.toolbox.editor = editor;
 
 var source, title;
 
@@ -208,7 +208,7 @@ editor.build = () => {
 };
 
 editor.buildSelection = () => {
-	const d = extendContent(BaseDialog, "$toolbox.select-script", {
+	const d = extend(BaseDialog, "$toolbox.select-script", {
 		set(func) {
 			d.cont.clear();
 			d.cont.pane(t => {

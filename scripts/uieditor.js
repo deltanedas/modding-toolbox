@@ -15,7 +15,7 @@
 	along with this program.	If not, see <https://www.gnu.org/licenses/>.
 */
 
-const ui = this.global.ui;
+const ui = global.ui;
 
 const uieditor = {
 	workspace: [],
@@ -23,7 +23,7 @@ const uieditor = {
 };
 const elements = uieditor.elements;
 
-const editor = this.global.toolbox.editor;
+const editor = global.toolbox.editor;
 uieditor.export = () => {
 	uieditor.dialog.hide();
 	const elems = [];
@@ -71,7 +71,7 @@ uieditor.build = () => {
 	squarei.down = Tex.buttonSquareDown;
 	squarei.over = squarei.checkedOver = Tex.buttonSquareOver;
 
-	const dialog = extendContent(BaseDialog, "$toolbox.uieditor", {
+	const dialog = extend(BaseDialog, "$toolbox.uieditor", {
 		addElement(name) {
 			const type = elements[name];
 			const element = {
@@ -213,4 +213,4 @@ uieditor.load = () => {
 };
 
 module.exports = uieditor;
-this.global.uieditor = uieditor;
+global.uieditor = uieditor;

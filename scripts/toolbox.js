@@ -23,7 +23,7 @@ const toolbox = {
 	},
 	dialog: null
 };
-this.global.toolbox = toolbox;
+global.toolbox = toolbox;
 
 const ui = require("ui-lib/library");
 const menus = [

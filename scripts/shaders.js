@@ -16,7 +16,7 @@
 */
 
 const editor = require("modding-toolbox/editor");
-const toolbox = this.global.toolbox;
+const toolbox = global.toolbox;
 
 const shaders = {
 	frag: null,
@@ -68,7 +68,7 @@ shaders.build = () => {
 
 	/* Shader preview */
 	const preview = new TextureRegionDrawable(Core.atlas.find("router"));
-	t.add(extendContent(Image, preview, {
+	t.add(extend(Image, preview, {
 		draw() {
 			if (shaders.shader) {
 				Draw.shader(shaders.shader);
