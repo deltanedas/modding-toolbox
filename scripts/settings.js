@@ -8,27 +8,21 @@
 
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+	along with this program.	If not, see <https://www.gnu.org/licenses/>.
 */
 
 /* Settings viewer */
-
-(() => {
 
 const settings = {
 	dialog: null
 };
 
-const consumer = method => extend(Packages.java.util.function.Consumer, {
-	accept: method
-});
-
 settings.build = () => {
-	const d = extendContent(FloatingDialog, "$toolbox.settings-editor", {
+	const d = extend(BaseDialog, "$toolbox.settings-editor", {
 		load() {
 			this.cont.clear();
 
@@ -38,73 +32,72 @@ settings.build = () => {
 			var settings;
 
 			const addSetting = key => {
-				const cell = settings.table(cons(setting => {
-					setting.defaults().left().padLeft(5);
+				const cell = settings.table().growX().height(48).left().name(key);
+				const setting = cell.get();
+				setting.defaults().left().padLeft(5);
 
-					setting.add("Key: " + key);
-					setting.add("Value: " + Core.settings.get(key, null));
-					setting.addImageButton(Icon.trash, run(() => {
-						Core.settings.remove(key);
-						settings.cells.remove(cell, true);
-					}));
-				})).growX().height(48).left().name(key);
+				setting.add("Key: " + key);
+				setting.add("Value: " + Core.settings.get(key, null));
+				setting.button(Icon.trash, () => {
+					Core.settings.remove(key);
+					settings.cells.remove(cell, true);
+				});
 				settings.row();
 			};
 
-			this.cont.pane(cons(t => {
+			this.cont.pane(t => {
 				const keys = Core.settings.keys();
 				settings = t;
-				keys.forEach(consumer(key => {
+				keys.forEach(key => {
 					addSetting(key);
-				}));
-			})).grow().left().top();
+				});
+			}).grow().left().top();
 
 			this.cont.row();
 
 			/* Set a value */
-			this.cont.table(cons(set => {
-				var key, value;
-				set.addField("key", cons(text => {
-					key = text;
-				})).left().width(200);
+			const set = this.cont.table().bottom().growX().get();
+			var key, value;
+			set.field("key", text => {
+				key = text;
+			}).left().width(200);
 
-				set.addField("value", cons(text => {
-					value = text;
-				})).left().width(100);
+			set.field("value", text => {
+				value = text;
+			}).left().width(100);
 
-				set.addImageButton(Icon.ok, run(() => {
-					Core.settings.put(key, value);
+			set.button(Icon.ok, () => {
+				Core.settings.put(key, value);
 
-					/* Update the value in the table */
-					const found = settings.cells.find(boolf(cell => {
-						return cell.get().name == key
-					}));
-					if (found) {
-						found.get().cells.get(1).get().text = "Value: [green]" + value;
-					} else {
-						addSetting(key);
-					}
-				}));
-			})).bottom().growX();
+				/* Update the value in the table */
+				const found = settings.cells.find(cell => {
+					return cell.get().name == key
+				});
+				if (found) {
+					found.get().cells.get(1).get().text = "Value: [green]" + value;
+				} else {
+					addSetting(key);
+				}
+			});
 		}
 	});
-	settings.dialog = d;
 
 	d.addCloseButton();
-	d.addImageTextButton("$save", Icon.save, run(() => {
-		Core.settings.save();
+	d.button("$save", Icon.save, () => {
+		Core.settings.manualSave();
 		Vars.ui.showInfoToast("Saved!", 5);
-	})).left();
+	}).left();
 	return d;
 };
 
 settings.add = t => {
-	t.addImageTextButton("$toolbox.settings-editor", Icon.settings, run(() => {
+	t.button("$toolbox.settings-editor", Icon.settings, () => {
 		settings.dialog.load();
 		settings.dialog.show();
-	}));
+	// FIXME: crashes when clicked
+	}).disabled(() => true);
 };
 
-module.exports = settings;
+settings.load = () => {};
 
-})();
+module.exports = settings;

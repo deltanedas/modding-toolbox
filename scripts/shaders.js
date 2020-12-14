@@ -8,19 +8,15 @@
 
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+	along with this program.	If not, see <https://www.gnu.org/licenses/>.
 */
 
-(() => {
-
-const Shader = Packages.arc.graphics.gl.Shader;
-
 const editor = require("modding-toolbox/editor");
-const toolbox = this.global.toolbox;
+const toolbox = global.toolbox;
 
 const shaders = {
 	frag: null,
@@ -55,7 +51,7 @@ shaders.compile = () => {
 				try {
 					shaders.applyFunc.call(this, Core.graphics.width, Core.graphics.height);
 				} catch (e) {
-					toolbox.showError("Failed to apply shader: " + e);
+					toolbox.showError("Failed to apply shader", e);
 					delete shaders.shader;
 				}
 			}
@@ -63,6 +59,74 @@ shaders.compile = () => {
 	} catch (e) {
 		throw "Failed to compile shader: " + e;
 	}
+};
+
+shaders.build = () => {
+	const d = new BaseDialog("$toolbox.shaders");
+	const t = d.cont;
+	t.defaults().center().top();
+
+	/* Shader preview */
+	const preview = new TextureRegionDrawable(Core.atlas.find("router"));
+	t.add(extend(Image, preview, {
+		draw() {
+			if (shaders.shader) {
+				Draw.shader(shaders.shader);
+			}
+
+			this.super$draw();
+
+			if (shaders.shader) {
+				Draw.shader();
+			}
+		}
+	})).size(128).fillY();
+	t.row();
+
+	const scripts = t.table().get();
+	t.row();
+
+	/* Shader configuration */
+	const addScript = key => {
+		scripts.button("$toolbox.shaders." + key, () => {
+			editor.select(script => {
+				shaders[key] = script;
+				Core.settings.put("toolbox.shaders." + key, script);
+				Core.settings.manualSave();
+			})
+		}).padRight(8).width(160);
+
+		scripts.label(() => shaders[key] || "...").left().width(200);
+		scripts.row();
+	};
+
+	addScript("vert");
+	addScript("frag");
+	addScript("apply");
+
+	/* Replace preview texture */
+	const p = t.table().width(300).get();
+	t.row();
+
+	p.field("router", name => {
+		preview.region = Core.atlas.find(name);
+	}).left().growX();
+
+	d.addCloseButton();
+	d.buttons.button("$toolbox.run", Icon.ok, () => {
+		try {
+			shaders.compile();
+		} catch (e) {
+			toolbox.showError("Failed to compile shader", e);
+		}
+	});
+	return d;
+};
+
+shaders.add = t => {
+	t.button("$toolbox.shaders", () => {
+		shaders.dialog.show();
+	});
 };
 
 shaders.load = () => {
@@ -75,61 +139,4 @@ shaders.load = () => {
 	load("apply");
 };
 
-shaders.build = () => {
-	const d = new FloatingDialog("$toolbox.shaders");
-	const t = d.cont;
-	t.defaults().center().top();
-
-	/* Shader preview */
-	t.add(extendContent(Image, Core.atlas.find("router"), {
-		draw() {
-			if (shaders.shader) {
-				Draw.shader(shaders.shader);
-			}
-
-			this.super$draw();
-			Draw.shader();
-		}
-	})).size(128).fillY();
-	t.row();
-
-	const scripts = t.table().get();
-	t.row();
-
-	/* Shader configuration */
-	const addScript = key => {
-		scripts.addButton("$toolbox.shaders." + key, run(() => {
-			editor.select(script => {
-				shaders[key] = script;
-				Core.settings.putSave("toolbox.shaders." + key, script);
-			})
-		})).padRight(8).width(160);
-
-		scripts.label(prov(() => shaders[key] || "...")).left().width(200);
-		scripts.row();
-	};
-
-	addScript("vert");
-	addScript("frag");
-	addScript("apply");
-
-	d.addCloseButton();
-	d.buttons.addImageTextButton("$run", Icon.ok, run(() => {
-		try {
-			shaders.compile();
-		} catch (e) {
-			toolbox.showError(e);
-		}
-	}));
-	shaders.dialog = d;
-};
-
-shaders.add = t => {
-	t.addButton("$toolbox.shaders", run(() => {
-		shaders.dialog.show();
-	})).padBottom(16);
-};
-
 module.exports = shaders;
-
-})();

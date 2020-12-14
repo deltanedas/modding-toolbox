@@ -8,28 +8,33 @@
 
 	This program is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
 	GNU General Public License for more details.
 
 	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+	along with this program.	If not, see <https://www.gnu.org/licenses/>.
 */
-
-(() => {
 
 const toolbox = {
 	tools: {
 		update: {},
-		draw: {}
+		draw: {},
+		draw3d: {}
 	},
 	dialog: null
 };
-this.global.toolbox = toolbox;
+global.toolbox = toolbox;
 
 const ui = require("ui-lib/library");
-const editor = require("modding-toolbox/editor");
-const settings = require("settings");
-const shaders = require("modding-toolbox/shaders");
+const menus = [
+	require("modding-toolbox/editor"),
+	require("settings"),
+	require("shaders"),
+	require("uieditor"),
+	require("outliner")
+];
+
+const editor = menus[0];
 
 const showError = ui.showError;
 toolbox.showError = showError;
@@ -38,26 +43,28 @@ toolbox.showError = showError;
 const pcall = (name, w, h) => {
 	const tool = toolbox.tools[name];
 	try {
-		if (tool.func) tool.func(w, h);
+		if (tool.func) eval(tool.func);
 	} catch (e) {
-		showError("Caught error for " + name + ": " + e);
+		showError("Caught error for " + name, e);
 		tool.func = null;
 	}
 };
 
-const buildTool = (cont, name) => {
+const buildTool = (cont, name, extra) => {
 	const tool = toolbox.tools[name];
 	const t = cont.table().get();
 	t.defaults().padRight(4);
+	extra = extra.join("\n");
 
-	t.addImageTextButton("$toolbox." + name, Icon.pencil, 48, run(() => {
+	t.button("$toolbox." + name, Icon.pencil, 48, () => {
 		editor.select(script => {
 			tool.script = script;
-			Core.settings.putSave("toolbox.tool." + name + ".script", script);
+			Core.settings.put("toolbox.tool." + name + ".script", script);
+			Core.settings.manualSave();
 		});
-	})).width(200).height(48);
+	}).width(200).height(48);
 
-	t.addImageButton(Icon.ok, 48, run(() => {
+	t.button(Icon.ok, 48, () => {
 		if (tool.script == null) {
 			return showError("Specify a script.");
 		}
@@ -66,46 +73,48 @@ const buildTool = (cont, name) => {
 			return showError("Script '" + tool.script + "' does not exist.");
 		}
 
-		try {
-			eval("tool.func = (w, h) => {\n" + editor.scripts[tool.script] + "}");
-		} catch (e) {
-			showError("Failed to compile script '" + tool.script + "': " + e);
-		}
-	})).size(48);
+		tool.func = extra + "\n" + editor.scripts[tool.script];
+	}).size(48);
 
-	t.addImageButton(Icon.cancel, 48, run(() => {
+	t.button(Icon.cancel, 48, () => {
 		tool.func = null;
-	})).size(48);
+	}).size(48);
 };
 
 const buildToolbox = () => {
-	const dialog = new FloatingDialog("$toolbox");
-	const t = dialog.cont;
+	const dialog = new BaseDialog("$toolbox");
+	var t;
+	dialog.cont.pane(table => {
+		t = table;
+	}).width(400).height(350);
 	t.defaults().width(300).height(64);
 
-	editor.build();
-	editor.add(t);
-	t.row();
+	for (var i in menus) {
+		menus[i].dialog = menus[i].build();
+		menus[i].add(t);
+		t.row();
+	}
 
-	settings.build();
-	settings.add(t);
-	t.row();
+	t.cells.peek().padBottom(16);
 
-	shaders.build();
-	shaders.add(t);
+	buildTool(t, "update", []);
 	t.row();
-
-	buildTool(t, "update");
+	buildTool(t, "draw", []);
 	t.row();
-	buildTool(t, "draw");
+	buildTool(t, "draw3d", [
+		"const r = Vars.renderer.planets;",
+		"const projection = r.cam.combined;"
+	]);
 
 	dialog.addCloseButton();
 	return dialog;
 };
 
 ui.onLoad(() => {
-	editor.load();
-	shaders.load();
+	for (var i in menus) {
+		menus[i].load();
+	}
+
 	for (var i in toolbox.tools) {
 		const script = Core.settings.get("toolbox.tool." + i + ".script", null);
 		toolbox.tools[i].script = script;
@@ -131,4 +140,6 @@ ui.addEffect((w, h) => {
 	pcall("draw", w, h);
 }, () => true);
 
-})();
+Events.run(Trigger.universeDrawEnd, () => {
+	pcall("draw3d", Core.graphics.width, Core.graphics.height);
+});
