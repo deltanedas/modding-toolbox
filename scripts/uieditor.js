@@ -134,7 +134,7 @@ uieditor.build = () => {
 				buttons.button(Icon.trash, squarei, () => {
 					const elem = uieditor.selected;
 					uieditor.workspace.splice(uieditor.workspace.indexOf(elem), 1);
-					if (elem.cell) elem.cell.get().remove();
+					if (elem.cell && elem.cell.get()) elem.cell.get().remove();
 					uieditor.editElement(null);
 					uieditor.rebuild();
 				});

@@ -3,7 +3,8 @@
 	"displayName": "[accent]Modding [gray]Toolbox[][]",
 	"author": "DeltaNedas",
 	"description": "Adds some utilities for mod developers.\n[stat]Requires [#00aaff]DeltaNedas/ui-lib[].",
-	"version": "3.7.1",
+	"repo": "DeltaNedas/modding-toolbox",
+	"version": "3.7.2",
 	"dependencies": ["ui-lib"],
 	"hidden": true,
 	"minGameVersion": 105
