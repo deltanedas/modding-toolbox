@@ -53,18 +53,38 @@ outliner.build = () => {
 	const t = d.cont;
 
 	const top = new Table();
+  var cBox, wBox;
 
 	top.add("Color: ");
-	top.field("#" + outliner.color, text => {
+	cBox = top.field("#" + outliner.color, text => {
 		outliner.color = outliner.getColor(text);
-	}).get().validator = text => !!outliner.getColor(text);
+	}).get();
 	top.row();
 
 	top.add("Width: ");
-	top.field("" + outliner.width, text => {
+	wBox = top.field("" + outliner.width, text => {
 		outliner.width = Math.max(1, parseInt(text));
-	}).get().validator = text => !isNaN(parseInt(text));
+	}).get();
 	t.add(top).row();
+  
+  const def = new Table();
+  
+  def.add("[stat]Reset to defaults").row();
+  def.button("Unit", () => {
+    outliner.color = Pal.darkerMetal;
+    cBox.text = "#" + Pal.darkerMetal;
+    outliner.width = 3;
+    wBox.text = 3;
+  }).size(120, 50).get();;
+  def.button("Turret", () => {
+    outliner.color = Color.valueOf("404049");
+    cBox.text = "#" + Color.valueOf("404049");
+    outliner.width = 4;
+    wBox.text = 4;
+  }).size(120, 50).get();;
+  cBox.validator = text => !!outliner.getColor(text);
+  wBox.validator = text => !isNaN(parseInt(text));
+  t.add(def).row();
 
 	t.add("[stat]1.[] Select an image to outline").row();
 	t.button("Select", () => {
