@@ -40,7 +40,7 @@ editor.setScript = name => {
 };
 
 const tryAddScript = (name, source) => {
-	if (editor.scripts[name]) {
+	if (editor.scripts[name] !== undefined) {
 		return false;
 	}
 
