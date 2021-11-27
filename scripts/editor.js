@@ -39,11 +39,37 @@ editor.setScript = name => {
 	title.text = name;
 };
 
-editor.addScript = source => {
-	const name = "Script #" + (Object.keys(editor.scripts).length + 1);
+const tryAddScript = (name, source) => {
+	if (editor.scripts[name]) {
+		return false;
+	}
+
 	editor.scripts[name] = source;
 	editor.rebuildScripts(name);
 	editor.setScript(name);
+	return true;
+};
+
+editor.addScript = source => {
+	// nice hack, just increment number of scripts and hope it works
+	let name = "Script #" + (Object.keys(editor.scripts).length + 1);
+	if (tryAddScript(name, source)) {
+		return;
+	}
+
+	/* keep trying new names until one isn't used
+	   Example:
+	   There is 1 script, "Script #2"
+	   Trying to add new script "Script #" + (1+1) doesn't work
+	   Script #1 isn't used, so it uses that instead */
+	for (var i = 1;; i++) {
+		let name = "Script #" + i;
+		if (tryAddScript(name)) {
+			break;
+		}
+	}
+
+	// how did we get here
 };
 
 editor.editScript = to => {
