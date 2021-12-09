@@ -24,7 +24,7 @@ const ui = global.ui;
 
 const blacklist = (init, list) => {
 	return element => {
-		const out = [init(element)];
+		const out = [init];
 		for (var i in element.properties) {
 			const val = element.properties[i];
 			if (list.indexOf(i) >= 0) continue;
@@ -259,7 +259,7 @@ elements.Row = {
 elements.Label = {
 	new: () => new Label("Label"),
 
-	export: blacklist(["text"], elem => "table.add(\"" + escapestr(elem.properties.text) + "\")"),
+	export: blacklist("text", elem => "table.add(\"" + escapestr(elem.properties.text) + "\")"),
 
 	properties: from(base, {
 		text: prop("text", "Label"),
