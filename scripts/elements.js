@@ -16,7 +16,7 @@
 */
 
 /* Wrappers over arc Elements and their properties.
-	 Exporting to JS is supported. */
+   Exporting to JS is supported. */
 
 const ui = global.ui;
 
@@ -259,7 +259,7 @@ elements.Row = {
 elements.Label = {
 	new: () => new Label("Label"),
 
-	export: blacklist("text", elem => "table.add(\"" + escapestr(elem.properties.text) + "\")"),
+	export: blacklist("text", []/*elem => "table.add(\"" + escapestr(elem.properties.text) + "\")"*/),
 
 	properties: from(base, {
 		text: prop("text", "Label"),
