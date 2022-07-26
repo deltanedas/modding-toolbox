@@ -117,7 +117,7 @@ uieditor.build = () => {
 			elems.clear();
 			for (var i in uieditor.workspace) {
 				const element = uieditor.workspace[i];
-				elems.button(element.name, Styles.squaret, () => {
+				elems.button(element.name, Styles.cleart, () => {
 					uieditor.editElement(element);
 				}).growX().pad(8);
 				elems.row();
