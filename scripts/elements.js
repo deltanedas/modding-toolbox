@@ -127,7 +127,7 @@ const bool = (name, def) => {
 		},
 
 		build(element, value, t) {
-			const label = t.button(value + "", Styles.clearTogglet, () => {
+			const label = t.button(value + "", Styles.clearTogglei, () => {
 				value = !value;
 				element.properties[name] = value;
 				this.apply(element, value);
@@ -187,7 +187,7 @@ const enumj = (name, enumj, def) => {
 		},
 
 		build(element, value, t) {
-			const label = t.button(value, Styles.clearPartialt, () => {
+			const label = t.button(value, Styles.cleai, () => {
 				ui.select(name + " enum", values, selected => {
 					element.properties[name] = selected;
 					this.apply(element, selected);

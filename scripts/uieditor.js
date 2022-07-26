@@ -67,9 +67,9 @@ uieditor.removeProp = (elem, name) => {
 
 uieditor.build = () => {
 	const squarei = new ImageButton.ImageButtonStyle();
-	squarei.up = squarei.checked = Tex.buttonSquare;
-	squarei.down = Tex.buttonSquareDown;
-	squarei.over = squarei.checkedOver = Tex.buttonSquareOver;
+	squarei.up = squarei.checked = Tex.button;
+	squarei.down = Tex.buttonDown;
+	squarei.over = squarei.checkedOver = Tex.buttonOver;
 
 	const dialog = extend(BaseDialog, "$toolbox.uieditor", {
 		addElement(name) {
@@ -109,7 +109,7 @@ uieditor.build = () => {
 	elemw.add("$toolbox.uieditor.elements");
 	elemw.row();
 	elemw.pane(elems => {
-		elems.background(Tex.buttonSquare);
+		elems.background(Tex.button);
 		elems.top();
 		elems.defaults().pad(6).height(32).top();
 
@@ -117,7 +117,7 @@ uieditor.build = () => {
 			elems.clear();
 			for (var i in uieditor.workspace) {
 				const element = uieditor.workspace[i];
-				elems.button(element.name, Styles.squaret, () => {
+				elems.button(element.name, Styles.cleart, () => {
 					uieditor.editElement(element);
 				}).growX().pad(8);
 				elems.row();
@@ -158,7 +158,7 @@ uieditor.build = () => {
 	propw.add("$toolbox.uieditor.properties");
 	propw.row();
 	propw.pane(props => {
-		props.background(Tex.buttonSquare);
+		props.background(Tex.button);
 		props.top();
 		props.defaults().pad(4);
 
@@ -168,7 +168,7 @@ uieditor.build = () => {
 
 			for (var i in element.properties) {
 				let prop = props.table().growX().left().get();
-				prop.background(Tex.buttonSquare);
+				prop.background(Tex.button);
 
 				prop.add(i).width(70).padRight(6).left().get().alignment = Align.left;
 				prop.defaults().fillX();
